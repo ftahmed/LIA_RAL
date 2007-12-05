@@ -1,10 +1,16 @@
-##########################################
-# 		LIA Automatic Speaker Recognition Package			#
-##########################################
+##########################################################
+#      MISTRAL PROJECT - 2007                            
+#											  
+# Readme File of LIA_RAL package		
+#							
+# Last edit: 5 décember 2007		
+# Last editor: e.charton/eric.charton@univ-avignon.fr 
+#						
+# Version : 2.001 
+##########################################################
 
-README: 04/2007
+LIA_RAL is an open project. Feel free to contact us to propose to work on it ! 
 
-LIA_RAL Package: v2
 ###### GNU/GPL Licence v2 and higher ################
 News:
 ----
@@ -41,13 +47,14 @@ I. Contents
 -----------
 
 Utilities for Automatic Speaker Recognition developed by the LIA.
-All of them are based on the ALIZE platform:
-http://www.lia.univ-avignon.fr/heberges/ALIZE/
+All of them are based on the ALIZE platform, part of the MISTRAL Project:
+http://mistral.univ-avignon.fr
+
 See `foo --help`, for help on each program.
 cfg/ directory gives you some configuration files foo.cfg for almost each program. 
 
 
-II. Install
+II. Install and compile
 -----------
 
 1. sh install.sh 
@@ -71,6 +78,14 @@ To compile in debug mode:
 The makefile system is recursive meaning you can do a complete make anywhere in the architecture by typing make, this will bring you to the package root and perform a complete make.
 
 A 'make tags' will generate a lia_ral.tags file in your TAGS_DIR directory via the TAGS program (both have to be set in config.txt). ctags is the typical program to generate tags when using vi, etags is for emacs.
+
+IMPORTANT NOTES FOR TROUBLESHOOTING:
+
+If you have problems to compile, please read our howto: 
+http://mistral.univ-avignon.fr/mistral_dev/pdf/mistral_technote.004.howToCompileMistral.pdf
+
+Please note you can download binary file on http://mistral.univ-avignon.fr/download.html
+
 
 III. Maintain
 -------------
@@ -104,9 +119,14 @@ How to generate doxygen:
 	make doxygen
 This will invoke doxygen to generate HTML docs in LIA_RAL/doc/doxygen
 
-V. CVS
+V. SVN
 -------
-An external CVS for ALIZE is not yet available. Soon.... 
+You can use our SVN repository to download LIA_RAL applications. Access is:
+
+svn://mistral.univ-avignon.fr/svn/LIA_RAL
+http://mistral.univ-avignon.fr/svn/LIA_RAL
+
+Latest stable version is in trunk. Current main version is in branches. Old versions ar in tags.
 
 V. Bugs & Known Problems
 -------
@@ -114,8 +134,8 @@ V. Bugs & Known Problems
 - You have to do a make clean if you invoke make DEBUG=yes
 - You have to do a make clean if you update alize lib.
 
-- Any questions; mail the alize-devel list (see the ALIZE website)
+- Any questions; mail the alize-devel list (see the MISTRAL website)
 
 
 ******************************************************************************
-LIA Automatic Speaker Recognition Team
+MISTRAL PROJECT / LIA Automatic Speaker Recognition Team
