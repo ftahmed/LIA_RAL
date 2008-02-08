@@ -1,6 +1,6 @@
 /*************************************
    
-What's new for Mistral_Utils
+What's new for LIA_Utils / Mistral_Utils
 
 Edited on 28 January 2008
 
