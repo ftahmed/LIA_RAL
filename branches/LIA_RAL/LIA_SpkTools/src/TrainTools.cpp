@@ -1048,9 +1048,15 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
       (*world) = emAcc.getEM(); // Get the EM estimate
       varianceControl(*world,varianceFlooring,varianceCeiling,globalCov);
       if (trainCfg.getComponentReduction()){
-	bool selectCompA[world->getDistribCount()];
-	double diff=(initialDistribCount-trainCfg.getTargetDistribCount())/(double) trainCfg.getNbTrainIt();
-	unsigned long nbTop=initialDistribCount-(unsigned long)((double)(trainIt+1)*diff);
+
+		// Tableau dynamique instancié sans pointeur (ancien code)
+		//bool selectCompA[world->getDistribCount()]
+		bool * selectCompA = new bool[world->getDistribCount()];
+
+
+		double diff=(initialDistribCount-trainCfg.getTargetDistribCount())/(double) trainCfg.getNbTrainIt();
+		unsigned long nbTop=initialDistribCount-(unsigned long)((double)(trainIt+1)*diff);
+
 	if (trainIt== (trainCfg.getNbTrainIt()-1)) nbTop=trainCfg.getTargetDistribCount();
 	if (nbTop<world->getDistribCount())
 	  {
