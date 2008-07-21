@@ -1,0 +1,49 @@
+TEST "LIVENESS" INDEPENDANT DU LOCUTEUR POUR L'AUTHENTIFICATION MULTIMODALE AUDIO-VISUAL
+
+Viet Bac LE & Laurent BESACIER
+Laboratoire LIG / Equipe GETALP - 08/2008
+email : Viet-Bac.Le@imag.fr
+        Laurent.Besacier@imag.fr
+
+1. INTRODUCTION :
+
+La méthode de vérification de « liveness » qu'on a développée au LIG (ex-CLIPS) depuis 2005 est basée sur la mesure de cohérence statistique entre les mouvements labiaux et la voix du locuteur [1, 2]. Pour effectuer cette mesure, on a comparé 2 techniques d'analyse de données : l'analyse canonique des correspondances (CANCOR) [3] et l'analyse par co-inertie (COIA) [4]. La première est relativement classique, tandis que la seconde, beaucoup plus récente, a été conçue à l'origine pour l'analyse de données en écologie statistique.
+
+Les analyses COIA et CANCOR permettent de déterminer une valeur de corrélation entre les données audio et vidéo. Cependant, on a montré que le seuillage simple de cette corrélation ne permet pas de détecter efficacement une attaque par playback. On a donc introduit un score de liveness basé non pas sur une seule valeur de corrélation, mais sur des valeurs successives obtenues en décalant progressivement l'audio par rapport à la bande image. D'après les tests sur la base XM2VTS, l'analyse de données par COIA conduit à des résultats bien meilleurs que CANCOR. Finalement, la méthode de vérification de liveness proposée permet de détecter un playback avec un taux d'EER (Equal Error Rate) de 12.5%. De plus, elle est totalement indépendante du locuteur [1].
+
+2. IMPLEMENTATION EN LANGAGE C :
+
+Ce travail est dans le cadre du projet ANR-RNTL MISTRAL (http://mistral.univ-avignon.fr). A partir du code MATLAB effectué par N. Eveno [1], nous avons déjà trouvé des algorithmes qui nous permet d'implémenter rapidement l'analyse COIA (l'analyse plus performante que l'analyse CANCOR) [5]. Nous avons implémenté aussi le score de liveness basé sur des valeurs successives obtenues en décalant progressivement l'audio par rapport à la bande image (valeur de décalage est de -10 à 10 trames).
+
+3. USAGE DE LOGICIEL :
+
+Voici la liste de paramètres qu'on peut utiliser avec le logiciel :
+
+	-a or --audio-feat <feature_file>  : fichier de paramètres du fichier audio (5 paramètres LPC par trame).
+	-e or --energy <feature_file>      : fichier de paramètre d'énergie du fichier audio (1 paramètre par trame).
+	-f or --video-feat <feature_file>  : fichier de paramètres du fichier vidéo (3 paramètres de contours labiaux par trame).
+
+Le format de fichiers en entrée est comme le suivant :
+
+	68 3				<- [nb total de trames] [nb de paramètres]
+	84.807  34.774  2101		<- paramètres de la trame 0
+	84.537  34.563  2100		<- paramètres de la trame 1
+	83.89   34.922  2102
+	83.15   35.679  2095
+	83.395  35.189  2052
+	84.112  34.354  2053		<- paramètres de la trame i
+	...
+
+4. EXEMPLES D'UTILISATION :
+
+Consulter le fichier ./example/example.csh. On a 1 exemple de type "live recording" et 2 exemples de type "playback". 
+
+Pour décider si un test est "playback" ou "live recording", on utilise un seuil de score COIA. Expérimentalement, un seuil optimal sur la base XM2VTS est entre 0.5 et 1. Si le score COIA est inférieur à ce seuil, on considère que le test est de type "playback"
+
+5. REFERENCES :
+
+[1] Eveno, N., Besacier, L., A speaker independent "liveness" test for audio-visual biometrics, In INTERSPEECH-2005, 3081-3084, Lisbon, Postugal, 2005.
+[2] Besacier, L., Transcription enrichie de documents dans un monde multilingue et multimodal, HDR, UJF, Janvier 2007.
+[3] Hosteling, H., Relations betweend two sets of variates, Biometrika, 28:321-377, 1936.
+[4] Doledec, S., Chessel D., Co-inertia analysis: an alternative method for studying species-environment relationships, Freshwater Biology, vol. 31, pp. 277-294, 1994
+[5] Dray, S., Chessel, D., Thioulouse, J., Co-inertia analysis and the linking of ecological data tables, Ecology, 84:3078-3089, 2003.
