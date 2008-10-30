@@ -1,12 +1,13 @@
 ##########################################################
-#      MISTRAL PROJECT - 2007                            
-#											  
+#      MISTRAL PROJECT - 2007 / 2008                        
+#      http://mistral.univ-avignon.fr
+#				  
 # Readme File of LIA_RAL package		
 #							
-# Last edit: 5 décember 2007		
-# Last editor: e.charton/eric.charton@univ-avignon.fr 
+# Last edit: 30 October 2008
+# Last editor: Eric / eric.charton@univ-avignon.fr 
 #						
-# Version : 2.001 
+# Version : 2.002 
 ##########################################################
 
 LIA_RAL is an open project. Feel free to contact us to propose to work on it ! 
@@ -139,3 +140,4 @@ V. Bugs & Known Problems
 
 ******************************************************************************
 MISTRAL PROJECT / LIA Automatic Speaker Recognition Team
+******************************************************************************
