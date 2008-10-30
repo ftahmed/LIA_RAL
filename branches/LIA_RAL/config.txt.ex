@@ -1,5 +1,5 @@
 # Please fill the correct path (ABSOLUTE) for ALIZE, BIN and LIB dirs
-ALIZE_DIR=/home/eric/mistral_plateforme/ALIZE
+ALIZE_DIR=/home/eric/mistral_plateforme/ALIZE/branches/ALIZE
 
 USER_BIN_DIR=./bin/
 USER_LIB_DIR=./lib/
@@ -35,6 +35,7 @@ LIA_RAL_TOPDIR=
 LIA_SpkTools_DIR=$(LIA_RAL_TOPDIR)/LIA_SpkTools
 LIA_SpkDet_DIR =$(LIA_RAL_TOPDIR)/LIA_SpkDet
 LIA_Utils_DIR=$(LIA_RAL_TOPDIR)/LIA_Utils
+LIA_RAL_BIN=$(LIA_RAL_TOPDIR)/bin/
 
 MAKEFLAGS=-rks
 ALIZE_LIB=$(ALIZE_DIR)/lib/
@@ -44,5 +45,8 @@ ALIZE_SRC=$(ALIZE_DIR)/src/
 ifeq ($(DEBUG),yes)
 	CXXFLAGS=$(CXXFLAGS_DEBUG)
 	LDFLAGS=$(LDFLAGS_DEBUG)
+<<<<<<< .mine
+=======
 	#ALIZE_LIB=$(ALIZE_DIR)/libdebug/
+>>>>>>> .r41
 endif
