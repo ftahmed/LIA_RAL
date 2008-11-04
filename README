@@ -4,10 +4,10 @@
 #				  
 # Readme File of LIA_RAL package		
 #							
-# Last edit: 30 October 2008
+# Last edit: 4 Nov 2008
 # Last editor: Eric / eric.charton@univ-avignon.fr 
 #						
-# Version : 2.002 
+# Version : 2.003
 ##########################################################
 
 LIA_RAL is an open project. Feel free to contact us to propose to work on it ! 
@@ -58,8 +58,10 @@ cfg/ directory gives you some configuration files foo.cfg for almost each progra
 II. Install and compile
 -----------
 
-1. sh install.sh 
-2. Fill in the config.txt file with your own parameters
+1. Fill in the config.txt file with your own parameters
+
+2. sh install.sh 
+
 3. 	For a FULL install, proceed as the following by typing this in a shell:
 		make 
 		make install
