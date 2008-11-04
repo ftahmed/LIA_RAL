@@ -70,6 +70,10 @@ cleanlib:
 $(EXEC): $(LIB_LIA) $(DEPS) $(OBJ)
 	@echo "----- Linking $@ -------------";
 	$(CPP) $(LDFLAGS) $(LIBSDIR) -o $@ $^ $(LIBS)
+
+	@echo "----- Copying $@ -------------";
+	@cp $@ $(LIA_RAL_BIN)
+
 	@echo "---------- Done ----------------------";
 
 ###############################
