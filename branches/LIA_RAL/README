@@ -4,19 +4,10 @@
 #				  
 # Readme File of LIA_RAL package		
 #							
-<<<<<<< .mine
 # Last edit: 4 November 2008
 # Last editor: e.charton/eric.charton@univ-avignon.fr 
-=======
-# Last edit: 4 Nov 2008
-# Last editor: Eric / eric.charton@univ-avignon.fr 
->>>>>>> .r55
-#						
-<<<<<<< .mine
-# Version : 2.002 
-=======
 # Version : 2.003
->>>>>>> .r55
+#
 ##########################################################
 
 LIA_RAL is an open project. Feel free to contact us to propose to work on it ! 
@@ -67,17 +58,10 @@ cfg/ directory gives you some configuration files foo.cfg for almost each progra
 II. Install and compile
 -----------
 
-<<<<<<< .mine
 1. !!! IMPORTANT !!! Fill in the config.txt file with your own parameters
 
 2. sh install.sh 
 
-=======
-1. Fill in the config.txt file with your own parameters
-
-2. sh install.sh 
-
->>>>>>> .r55
 3. 	For a FULL install, proceed as the following by typing this in a shell:
 		make 
 		make install
@@ -161,9 +145,5 @@ V. Bugs & Known Problems
 
 ******************************************************************************
 MISTRAL PROJECT / LIA Automatic Speaker Recognition Team
-<<<<<<< .mine
 ******************************************************************************
 
-=======
-******************************************************************************
->>>>>>> .r55
