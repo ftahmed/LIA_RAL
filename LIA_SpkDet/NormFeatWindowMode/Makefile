@@ -15,25 +15,27 @@ DEPS=
 SRC_DIR=./src
 SRC= $(wildcard $(SRC_DIR)/*.cpp)
 OBJ= $(SRC:$(SRC_DIR)/%.cpp=$(SRC_DIR)/%.o)
+LIB_LIA=$(LIA_SpkTools_DIR)/libliatools.a
 
 ###############################
 # LIBS & INC DIR
 ###############################
-LIBSDIR = -L$(ALIZE_DIR)/src -L$(LIA_SpkTools_DIR) -L$(USER_LIB_DIR)
-INCLDIR = -I$(SRC_DIR) -I$(ALIZE_DIR)/src -I$(LIA_SpkTools_DIR)/src
 DEPS_DIR=$(dir $(DEPS))
 DEPS_INC=$(DEPS_DIR:%=-I%)
-INCLDIR:=$(INCLDIR) $(DEPS_INC) 
-LIB_LIA=libliatools.a
+LIBSDIR = -L$(ALIZE_LIB) -L$(LIA_SpkTools_DIR) -L$(USER_LIB_DIR)
+INCLDIR = -I$(SRC_DIR) -I$(ALIZE_DIR)/src -I$(LIA_SpkTools_DIR)/src $(DEPS_INC) 
+
 LIBS = -lliatools -lalize -lm 
-DEPLIB=$(wildcard $(LIA_SpkTools_DIR)/src/*.cpp)
-DEPLIB:=libliatools.a $(DEPLIB)
+ifeq ($(THREAD),true)
+LIBS +=-lpthread
+CXXFLAGS+=-DTHREAD
+endif
 
 ###############################
 # Find executables
 ###############################
 MAIN=$(wildcard $(SRC_DIR)/*Main.cpp)
-EXEC=$(MAIN:$(SRC_DIR)/%Main.cpp=%.exe)
+EXEC=$(MAIN:$(SRC_DIR)/%Main.cpp=%)$(EXE_EXT)
 
 ###############################
 # Local Mode
@@ -47,32 +49,38 @@ distrib:
 	@(cd ../../ && $(MAKE))
 all-rec: $(EXEC) $(OBJ)
 install: install-rec
-install-rec: deps $(EXEC) 
+install-rec: $(EXEC) 
 	@echo "----- Installing $^-------------";
 	cp $(EXEC) $(USER_BIN_DIR)
 clean: clean-rec
 clean-rec:
 	@echo "----- Cleaning -------------";
-	@rm -rf $(SRC_DIR)/*.o *.exe
+	@rm -rf $(SRC_DIR)/*.o $(EXEC)
+cleanlib:
+	@echo "----- Clean LIA_SpkTools ----------";
+	@$(MAKE) -C $(LIA_SpkTools_DIR) clean
 
 ###############################
 # Objs, Exec, Lib targets
 ###############################
 %.o:%.cpp
-	@echo "----- Compiling $^ -------------";
-	$(CPP) $(INCLDIR) $(CXXFLAGS) -o $@ -c $< 
+	@echo "----- Compiling $< -------------";
+	$(CPP) $(INCLDIR) $(CXXFLAGS) -o $@ -c $<
 
-%.exe:$(DEPS) $(OBJ) $(LIA_SpkTools_DIR)/$(LIB_LIA)
+$(EXEC): $(LIB_LIA) $(DEPS) $(OBJ)
 	@echo "----- Linking $@ -------------";
-	$(CPP) $(LDFLAGS) $(LIBSDIR) -o $@  $^ $(LIBS)
+	$(CPP) $(LDFLAGS) $(LIBSDIR) -o $@ $^ $(LIBS)
+
+	@echo "----- Copying $@ -------------";
+	@cp $@ $(LIA_RAL_BIN)
+
 	@echo "---------- Done ----------------------";
 
 ###############################
 # Dependancy on LIA_SpkTools
 ###############################
-deps: $(DEPLIB)
-$(DEPLIB):
-	@$(MAKE) -C $(LIA_SpkTools_DIR)/ $(LIB_LIA)
+deps:
+	$(MAKE) -C $(LIA_SpkTools_DIR)
 
 .PHONY: clean-rec
 # Protect deps from cleaning
