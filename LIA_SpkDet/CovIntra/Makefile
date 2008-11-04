@@ -22,10 +22,10 @@ LIB_LIA=$(LIA_SpkTools_DIR)/libliatools.a
 ###############################
 DEPS_DIR=$(dir $(DEPS))
 DEPS_INC=$(DEPS_DIR:%=-I%)
-LIBSDIR = -L$(ALIZE_LIB) -L$(LIA_SpkTools_DIR) -L$(USER_LIB_DIR) -L./src
+LIBSDIR = -L$(ALIZE_LIB) -L$(LIA_SpkTools_DIR) -L$(USER_LIB_DIR)
 INCLDIR = -I$(SRC_DIR) -I$(ALIZE_DIR)/src -I$(LIA_SpkTools_DIR)/src $(DEPS_INC) 
 
-LIBS = -lliatools -lalize -lm -lsvd 
+LIBS = -lliatools -lalize -lm 
 ifeq ($(THREAD),true)
 LIBS +=-lpthread
 CXXFLAGS+=-DTHREAD
@@ -69,14 +69,11 @@ cleanlib:
 
 $(EXEC): $(LIB_LIA) $(DEPS) $(OBJ)
 	@echo "----- Linking $@ -------------";
-	@echo " Note: this prg needs the SVDLIBC   ";
-	@echo " For convenience this library is compiled";
-	@echo " and included as libsvd.a in the src folder"; 
-	@echo " If you have an error : "; 
-	@echo " it should be (installed and) compiled manually";
-	@echo " see the README in src dir for info";
-	@echo "------------------------------";
 	$(CPP) $(LDFLAGS) $(LIBSDIR) -o $@ $^ $(LIBS)
+
+	@echo "----- Copying $@ -------------";
+	@cp $@ $(LIA_RAL_BIN)
+
 	@echo "---------- Done ----------------------";
 
 ###############################
