@@ -1,3 +1,43 @@
+// LIA_UTILS
+//
+// This file is a part of Mistral Software LIA_Utils, based on Mistral_Ral toolkit 
+// Mistral_Ral  is a free, open tool for speaker recognition
+// Mistral_Ral is a development project initiated and funded by the LIA lab.
+//
+// See mistral.univ-avignon.fr 
+// 
+// ALIZE is needed for Mistral_SpkDet
+// for more information about ALIZE, see http://alize.univ-avignon.fr
+//
+// Copyright (C) 2004 - 2005 - 2006 - 2007 -2008
+//  Laboratoire d'informatique d'Avignon [www.lia.univ-avignon.fr]
+//  Jean-Francois Bonastre [jean-francois.bonastre@lia.univ-avignon.fr]
+//      
+// Mistral and Mistral_SpkDet is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// This software is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+// You should have received a copy of the GNU General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// The LIA team as well as the ALIZE project want to highlight the limits of voice authentication
+// in a forensic context. 
+// The following paper proposes a good overview of this point:
+// [Bonastre J.F., Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-chagnolleau I.,
+//  Person  Authentification by Voice: A Need of Caution,
+//  Eurospeech 2003, Genova]
+//
+// Contact Jean-Francois Bonastre (jean-francois.bonastre@lia.univ-avignon.fr) for
+// more information about the licence or the use of LIA_SpkDet
+//
+// Reviewed on 5 nov 2008 by eric
+//
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
