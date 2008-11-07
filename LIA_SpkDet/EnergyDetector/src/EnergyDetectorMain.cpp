@@ -1,13 +1,13 @@
 // EnergyDetectorMain.cpp
-// This file is a part of LIA Software LIA_SpkDet, based on ALIZE toolkit 
+// This file is a part of LIA Software LIA_SpkDet, based on Mistral_Ral toolkit 
 // LIA_SpkDet  is a free, open tool for speaker recognition
 // LIA_SpkDet is a development project initiated and funded by the LIA lab.
-// See www.lia.univ-avignon.fr
+// See mistral.univ-avignon.fr 
 // 
 // ALIZE is needed for LIA_SpkDet
-// for more information about ALIZE, see http://www.lia.univ-avignon.fr/heberges/ALIZE/
+// for more information about ALIZE, see http://alize.univ-avignon.fr
 //
-// Copyright (C) 2004
+// Copyright (C) 2004 - 2005 - 2006 - 2007 -2008
 //  Laboratoire d'informatique d'Avignon [www.lia.univ-avignon.fr]
 //  Jean-Francois Bonastre [jean-francois.bonastre@lia.univ-avignon.fr]
 //      
@@ -49,6 +49,9 @@
 // more information about the licence or the use of LIA_SpkDet
 // First version 15/07/2004
 // New version 23/02/2005
+// 
+// Important review on ThreeSholdMode 4 nov 2008
+//
 #include <liatools.h>
 #include "alize.h"
 #include "EnergyDetector.h"
@@ -70,6 +73,10 @@ int main (int argc, char *argv[])
     cc.addStringParam("labelOutputFrames",true,true,"output label tag");
     cc.addFloatParam("alpha",true,true,"threshold giving the percentage of data of the middle Gaussian to take into account");
     cc.addStringParam("segmentalMode",true,true,"file to have a file by file behaviour");
+
+    // gestion du thresholdMode obligatoire
+    cc.addStringParam("thresholdMode",true,true,"this parameter must be set to select 3 top gaussian. It's a default parameter");
+
   try
   {
     CmdLine cmdLine (argc, argv);
