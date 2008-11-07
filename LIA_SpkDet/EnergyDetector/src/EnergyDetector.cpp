@@ -1,13 +1,13 @@
-// EnergyDetector.cpp
-// This file is a part of LIA Software LIA_SpkDet, based on ALIZE toolkit 
+// EnergyDetectorMain.cpp
+// This file is a part of LIA Software LIA_SpkDet, based on Mistral_Ral toolkit 
 // LIA_SpkDet  is a free, open tool for speaker recognition
 // LIA_SpkDet is a development project initiated and funded by the LIA lab.
-// See www.lia.univ-avignon.fr
+// See mistral.univ-avignon.fr 
 // 
 // ALIZE is needed for LIA_SpkDet
-// for more information about ALIZE, see http://www.lia.univ-avignon.fr/heberges/ALIZE/
+// for more information about ALIZE, see http://alize.univ-avignon.fr
 //
-// Copyright (C) 2004
+// Copyright (C) 2004 - 2005 - 2006 - 2007 -2008
 //  Laboratoire d'informatique d'Avignon [www.lia.univ-avignon.fr]
 //  Jean-Francois Bonastre [jean-francois.bonastre@lia.univ-avignon.fr]
 //      
@@ -47,9 +47,11 @@
 //
 // Contact Jean-Francois Bonastre (jean-francois.bonastre@lia.univ-avignon.fr) for
 // more information about the licence or the use of LIA_SpkDet
-// First beta version  03/05/2003
-// New version 1.0 12/29/2004
-// Main Author : JFB
+// First version 15/07/2004
+// New version 23/02/2005
+// 
+// Important review on ThreeSholdMode 4 nov 2008
+//
 
 #if !defined(ALIZE_EnergyDetector_cpp)
 #define ALIZE_EnergyDetector_cpp
@@ -67,7 +69,15 @@
 using namespace alize;
 using namespace std;
 
-
+// Plot the enrgy model
+void plotEnergyDistrib(MixtureGD &mixt)
+{
+  unsigned long distribCount = mixt.getDistribCount();
+  cout << "EnergyModel"<<endl;
+  for (unsigned long c=0; c<distribCount; c++)
+    cout << "Component["<<c<<"] Mean["<<mixt.getDistrib(c).getMean(0)<<
+		 "] Cov["<<mixt.getDistrib(c).getCov(0)<<"] Weight["<<mixt.weight(c)<<"]"<<endl;
+}	
 //---------------------------------------------------------------------------------------------------------------
 // find the highest energy component...
 unsigned long findMaxEnergyDistrib(MixtureGD &mixt)
@@ -166,7 +176,7 @@ MixtureGD &energyMixtureInit(MixtureServer &ms, StatServer &ss, FeatureServer &f
 {
    unsigned long vectSize = world.getVectSize();	
   unsigned long distribCount = world.getDistribCount();
-
+ 
   double mean=-2.0;
   double meanIncrement;
   if (distribCount>1) meanIncrement=4.0/(double)(distribCount-1);
@@ -217,10 +227,17 @@ SegCluster&  energyDetector(Config& config,SegServer &segServer,String &featureF
   
   FrameAccGD globalFrameAcc;                                         // Create a frame accumulator for mean/cov computation
   globalMeanCov (fs,selectedSegments,globalFrameAcc,config);         // Compute the global mean and cov on the input segments
+  
   DoubleVector globalMean=globalFrameAcc.getMeanVect();              // Get the Mean
   DoubleVector globalCov=globalFrameAcc.getCovVect();                // Get the Cov
+  if (verboseLevel>1){
+	cout <<"global mean and cov"<<endl;
+	for (unsigned i=0; i < fs.getVectSize(); i++)cout << "mean[" << i << "=" << globalMean[i] << "]\tcov[" << globalCov[i] << "]" << endl;
+  }
   MixtureGD & energyModel=ms.createMixtureGD();	               // Creating the energy model
-  energyMixtureInit(ms,ss,fs,energyModel,selectedSegments,globalCov,config); // Init the energy model with randomly picked data 
+  //  energyMixtureInit(ms,ss,fs,energyModel,selectedSegments,globalCov,config); // Init the energy model with randomly picked data 
+  energyMixtureInit(ms, ss, fs,energyModel,selectedSegments,globalCov,config);  // Fixed init
+  if (verboseLevel>1)plotEnergyDistrib(energyModel);
   MixtureStat &emAcc=ss.createAndStoreMixtureStat(energyModel);
   for (int trainIt=0; trainIt<nbTrainIt; trainIt++){                 // Training It loop
     emAcc.resetEM();                                                 // EM stuff
@@ -229,6 +246,7 @@ SegCluster&  energyDetector(Config& config,SegServer &segServer,String &featureF
     varianceControl(energyModel,flooring,ceiling,globalCov);         // Apply the variance normalisation		  	  
     if (verbose) cout << "Partial Train it["<<trainIt-1 <<"] (-1 means initial partial it) LLK="<<llkPreviousIt<<" Nb Frames="
 		      <<emAcc.getEMFeatureCount()<<endl;
+    if (verboseLevel>1)plotEnergyDistrib(energyModel);
   } 
   unsigned long nbInitialFrames= (unsigned long) emAcc.getEMFeatureCount(); // TODO, REPLACE THIS BY A COUNT OF selectedSegments duration - 
   double threshold=0;                                                  // The Energy threshold 
