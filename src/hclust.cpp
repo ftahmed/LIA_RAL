@@ -34,6 +34,7 @@
 #define _HCLUST_CPP
 
 #include "hclust.h"
+#include "float.h"
 
 using namespace alize;
 using namespace lium_seg;
