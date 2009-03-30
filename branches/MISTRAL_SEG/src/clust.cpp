@@ -40,6 +40,8 @@
 #include "bichclust.h"
 #include "clrhclust.h"
 #include <malloc.h>
+#include "float.h"
+
 using namespace lium_seg;
 
 #define MIN(x,y) ((x)<(y))?(x):(y)

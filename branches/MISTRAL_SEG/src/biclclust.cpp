@@ -34,6 +34,8 @@
 #define _LCLUST_CPP
 
 #include "biclclust.h"
+#include "float.h"
+
 using namespace lium_seg;
 using namespace alize;
 
