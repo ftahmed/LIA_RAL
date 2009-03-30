@@ -1,0 +1,21 @@
+##########################################################
+#      MISTRAL PROJECT - 2007-2008-2009                          
+#											  
+# Readme File of Mistral_Seg package	
+#							
+# Last edit: 30 March 2009		
+# Last editor : E.charton/eric.charton@univ-avignon.fr 
+#						
+# Version : 1.000 - 		
+##########################################################
+
+This package is part of the Mistral Project. Please visit http://mistral.univ-avignon.fr 
+for more informations and documentations.
+
+You have more documentation about this package here : 
+
+http://mistral.univ-avignon.fr/wiki/index.php/Diarization_user_guide_%28Speaker_Segmentation_and_Classification%29
+
+A formal description of segmentation tools is here :
+
+http://mistral.univ-avignon.fr/wiki/index.php/Mistral_seg
