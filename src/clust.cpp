@@ -39,7 +39,7 @@
 #include "biclclust.h"
 #include "bichclust.h"
 #include "clrhclust.h"
-#include <malloc.h>
+#include <cstdlib>
 #include "float.h"
 
 using namespace lium_seg;
