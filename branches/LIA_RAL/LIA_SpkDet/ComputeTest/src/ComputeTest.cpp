@@ -308,6 +308,7 @@ int ComputeTest(Config& config)
 	    }
 	  }  
 	}  
+	clientAcc.deleteAllObjects();
       }
       if ((nbMaxMixtureInMemory>0)&&(ms.getMixtureCount()>nbMaxMixtureInMemory)){
 	if (verbose) cout <<"Cleaning the mixture server from 1 to "<<ms.getMixtureCount()<<endl;
@@ -443,6 +444,7 @@ int ComputeTestFA(Config& config)
 	  }  
 	}  
 
+	clientAcc.deleteAllObjects();
 	
         if (verboseLevel > 2) cout << "To be deleted" <<  ms.toString() << endl;	  
         if ((nbMaxMixtureInMemory>0)&&(ms.getMixtureCount()>nbMaxMixtureInMemory)){
