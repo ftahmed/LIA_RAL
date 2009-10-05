@@ -45,8 +45,5 @@ ALIZE_SRC=$(ALIZE_DIR)/src/
 ifeq ($(DEBUG),yes)
 	CXXFLAGS=$(CXXFLAGS_DEBUG)
 	LDFLAGS=$(LDFLAGS_DEBUG)
-<<<<<<< .mine
-=======
 	#ALIZE_LIB=$(ALIZE_DIR)/libdebug/
->>>>>>> .r41
 endif
