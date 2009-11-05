@@ -182,11 +182,18 @@ int labelFusion(Config& config)
 {
   String extOutput=".lbl";                                               // the extension of the output files    
   if (config.existsParam("saveLabelFileExtension")) extOutput=config.getParam("saveLabelFileExtension");   
-  String pathOutput="./";                                                // the path of the output files    
-  if (config.existsParam("labelOutputPath")) pathOutput=config.getParam("labelOutputPath");    
+  String pathOutput;//="./";                                                // the path of the output files    
+  String pathInput;//="./";                                                   // the path of the input files    
+  if (config.existsParam("labelOutputPath")) pathOutput=config.getParam("labelOutputPath");
+
+  if (config.existsParam("labelInputPath")){
+	pathInput=config.getParam("labelInputPath");
+	config.setParam("labelFilesPath", config.getParam("labelInputPath"));
+  }
+ 
+  String fileOut=config.getParam("labelOneFilename");
   String fileOne=config.getParam("labelOneFilename");
   String fileTwo=config.getParam("labelTwoFilename");
-  String fileOut=fileOne;
   if (config.existsParam("outputFilename"))
     fileOut=config.getParam("outputFilename");
   String labelSelectedFrames=config.getParam("labelSelectedFrames");
@@ -196,6 +203,7 @@ int labelFusion(Config& config)
     SegServer segServerTwo;	
     LabelServer labelServerOne;
     LabelServer labelServerTwo;
+
     loadClusterFile(fileOne,segServerOne,labelServerOne,config);
     if (debug) cout <<"label 1 loaded"<<endl;
     loadClusterFile(fileTwo,segServerTwo,labelServerTwo,config);
@@ -241,12 +249,20 @@ int labelMorphing(Config& config)
 {
   String extOutput=".lbl";                                               // the extension of the output files    
   if (config.existsParam("saveLabelFileExtension")) extOutput=config.getParam("saveLabelFileExtension");   
-  String pathOutput="./";                                                // the path of the output files    
-  if (config.existsParam("labelOutputPath")) pathOutput=config.getParam("labelOutputPath");    
-  String fileIn=config.getParam("labelFilename");
+  String pathOutput;//="./";                                                // the path of the output files 
+  String pathInput;//="./";                                                   // the path of the input files 
+  if (config.existsParam("labelOutputPath")){ pathOutput=config.getParam("labelOutputPath");
+  }
+	
+  if (config.existsParam("labelInputPath")){
+	pathInput=config.getParam("labelInputPath");
+	config.setParam("labelFilesPath", config.getParam("labelInputPath"));
+  }
+  
+  String fileIn= config.getParam("labelFilename");
   String fileOut=fileIn;
   if (config.existsParam("outputFilename"))
-    fileOut=config.getParam("outputFilename");
+    fileOut=config.getParam("labelFilename");
   String labelSelectedFrames=config.getParam("labelSelectedFrames");
 
   try{
@@ -269,8 +285,9 @@ int labelMorphing(Config& config)
       unsigned long final=totalFrame(clusterOutput);
       long suppressed=init-final;
       cout <<"File["<<fileIn<<"] Initial number of Frame["<<init<<"] Final number of frame["<<final<<"] Suppressed ["<<suppressed<<"]"<<endl;
-      cout << "Output the new label file in ["<<pathOutput+fileOut+extOutput <<"]"<<endl;
+      cout << "Output the new label file in ["<<fileOut+extOutput <<"]"<<endl;
     }
+
     outputLabelFile(clusterOutput,pathOutput+fileOut+extOutput,config);
   } // fin try
   
