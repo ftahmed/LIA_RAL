@@ -62,6 +62,7 @@ ConfigChecker cc;
 cc.addStringParam("config",false, true,"default config file");
 cc.addStringParam("saveLabelFileExtension",true, true,"produced labelFiles extension");
 cc.addStringParam("labelOutputPath",false,true,"path where to store produced labelFiles");
+cc.addStringParam("labelInputPath",false,true,"path where to load original labelFiles");
 cc.addIntegerParam("winLength",false,true,"window of the morphological filter in frames");
 cc.addFloatParam("selectThreshold",false,true,"applying filter when selected/unselected matches this threshold");
 cc.addStringParam("mode",false,true,"decide the mode: fusion(2 files) or morphing (one file) default=fusion");
