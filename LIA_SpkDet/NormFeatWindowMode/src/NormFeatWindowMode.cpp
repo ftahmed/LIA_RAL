@@ -1,4 +1,4 @@
-// NormFeat.cpp
+// NormFeatWindowMode.cpp
 // This file is a part of LIA Software LIA_SpkDet, based on ALIZE toolkit 
 // LIA_SpkDet  is a free, open tool for speaker recognition
 // LIA_SpkDet is a development project initiated and funded by the LIA lab.
@@ -50,8 +50,8 @@
 // Main Author : Alexandre PRETI
 // version : 31 oct 2007
 
-#if !defined(ALIZE_NormFeat_cpp)
-#define ALIZE_NormFeat_cpp
+#if !defined(ALIZE_NormFeatWindowMode_cpp)
+#define ALIZE_NormFeatWindowMode_cpp
 
 #include <iostream>
 #include <fstream>
@@ -59,7 +59,7 @@
 #include <cassert>
 #include <cmath>
 #include <liatools.h>
-#include "NormFeat.h"
+#include "NormFeatWindowMode.h"
 
 using namespace alize;
 using namespace std;
@@ -190,7 +190,7 @@ int normFeatOnlineMode (Config & config) {
   }
   
   if (verbose){
-    cout << "NormFeat";
+    cout << "NormFeatWindowMode";
     cout << " Window mode, Window Duration["<<windowDuration<<"]"<<endl;
     cout << "var and mean normalisation"<< endl; 
   }
@@ -310,4 +310,4 @@ int normFeatOnlineMode (Config & config) {
 		
 		
 
-#endif // !defined(ALIZE_NormFeat_cpp)
+#endif // !defined(ALIZE_NormFeatWindowMode_cpp)
