@@ -72,6 +72,11 @@ $(EXEC):$(DEPS) $(OBJ) $(LIA_SpkTools_DIR)/$(LIB_LIA)
 	@echo "----- Linking $@ -------------";
 	$(CPP) $(LDFLAGS) $(LIBSDIR) -o $@  $^ $(LIBS)
 	@echo "---------- Done ----------------------";
+	
+	@echo "----- Copying $@ -------------";
+	@cp $@ $(LIA_RAL_BIN)
+
+	@echo "---------- Done ----------------------";
 
 ###############################
 # Dependancy on LIA_SpkTools
