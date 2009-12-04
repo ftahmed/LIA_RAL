@@ -28,7 +28,7 @@ void TopGauss::read(String & featureFilename,Config &config) {
 	if (verbose) cout << "(TopGauss::read) File ["<<featureFilename<<"] ... ";
 	String nbGaussPerFrameFilename=config.getParam("nbGaussianFilesDir")+featureFilename;
 	if (verboseLevel > 2) cout << "(TopGauss) Reading indexes in file ["<<nbGaussPerFrameFilename<<"]"<<endl;	
-	ifstream nbGaussFile(nbGaussPerFrameFilename.c_str(),ios::in);
+	ifstream nbGaussFile(nbGaussPerFrameFilename.c_str(),ios::in|ios::binary);				//ios::binary added by alarcher
 	if(!nbGaussFile){throw Exception("Cannot find nbGaussian file", __FILE__, __LINE__);}	
 	// Read number of frames
 	nbGaussFile.read((char *)&_nt,sizeof(unsigned long));
@@ -47,7 +47,7 @@ void TopGauss::read(String & featureFilename,Config &config) {
 void TopGauss::write(String & featureFilename,Config & config) {
 	if (verbose) cout << "(TopGauss::write) File ["<<featureFilename<<"] "<<endl;	
 	String nbGaussFilename=config.getParam("nbGaussianFilesDir")+featureFilename;
-	ofstream nbGaussFile (nbGaussFilename.c_str(),ios::out);
+	ofstream nbGaussFile (nbGaussFilename.c_str(),ios::out|ios::binary);			//ios::binary added by alarcher
 	if(!nbGaussFile){throw Exception("Cannot find nbGaussian file", __FILE__, __LINE__);}	
 	nbGaussFile.write((char *)&_nt,sizeof(unsigned long));		// write number of frames in cluster
 	nbGaussFile.write((char *)&_nbgcnt,sizeof(unsigned long));		// write number of frames in cluster	
