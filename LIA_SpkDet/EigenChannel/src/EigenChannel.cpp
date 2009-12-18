@@ -104,10 +104,10 @@ void verifyEMLK(FactorAnalysisStat & FA,XList &ndx,FeatureServer &fs,Config &con
 
 int EigenChannel(Config & config){
 	unsigned long nbIt=config.getParam("nbIt").toLong();
-	bool computeLLK=false;
-	if (config.existsParam("computeLLK")) computeLLK=true;	
+	bool _computeLLK=false;
+	if (config.existsParam("computeLLK")) _computeLLK=true;	
 	bool init=false;
-	if (config.existsParam("loadAccs")) init=true;
+	if (config.existsParam("loadAccs")) init=config.getParam("loadAccs").toBool();;
 
 	XList ndx(config.getParam("ndxFilename"));
 	XLine allFiles=ndx.getAllElements();			
@@ -127,7 +127,7 @@ int EigenChannel(Config & config){
 	
 	FA.storeAccs(); // save FA state
 	for(unsigned long i=0;i<nbIt;i++){
-		if (computeLLK) verifyEMLK(FA,ndx,fs,config);
+		if (_computeLLK) verifyEMLK(FA,ndx,fs,config);
 		if (verbose) cout << "(EigenChannel) --------- Iteration "<<i<<"--------- "<<endl;
 		FA.estimateAndInverseL(config);
 		FA.substractSpeakerStats();
