@@ -1,96 +1,47 @@
-// ComputeNormMain.cpp
-// 
-// This file is a part of Mistral Package and LIA Software 
-// LIA_SpkDet, based on Mistral_Ral toolkit 
-// LIA_SpkDet is a free, open tool for speaker recognition
-// LIA_SpkDet is a development project initiated and funded by the LIA lab.
-//
-// See mistral.univ-avignon.fr 
-// 
-// ALIZE is needed for LIA_SpkDet
-// for more information about ALIZE, see http://alize.univ-avignon.fr
-//
-// Copyright (C) 2004 - 2005 - 2006 - 2007 -2008
-//  Laboratoire d'informatique d'Avignon [www.lia.univ-avignon.fr]
-//  Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
-//      
-// Mistral is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-// This software is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// General Public License for more details.
-// You should have received a copy of the GNU General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// The LIA team as well as the ALIZE project want to highlight the limits of voice authentication
-// in a forensic context. 
-// The following paper proposes a good overview of this point:
-// [Bonastre J.F., Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-chagnolleau I.,
-//  Person  Authentification by Voice: A Need of Caution,
-//  Eurospeech 2003, Genova]
-// The conclusion of the paper of the paper is proposed bellow:
-// [Currently, it is not possible to completely determine whether the
-//  similarity between two recordings is due to the speaker or to other
-//  factors, especially when: (a) the speaker does not cooperate, (b) there
-//  is no control over recording equipment, (c) recording conditions are not 
-//  known, (d) one does not know whether the voice was disguised and, to a
-//  lesser extent, (e) the linguistic content of the message is not
-//  controlled. Caution and judgment must be exercised when applying speaker
-//  recognition techniques, whether human or automatic, to account for these
-//  uncontrolled factors. Under more constrained or calibrated situations,
-//  or as an aid for investigative purposes, judicious application of these
-//  techniques may be suitable, provided they are not considered as infallible.
-//  At the present time, there is no scientific process that enables one to
-//  uniquely characterize a person=92s voice or to identify with absolute
-//  certainty an individual from his or her voice.]
-//
-// Contact Jean-Francois Bonastre (jean-francois.bonastre@lia.univ-avignon.fr) for
-// more information about the licence or the use of LIA_SpkDet
-// First version 15/07/2004
-// New version 23/02/2005
-// 
-// Last review 4 nov 2008
-//
-
-
 #include <iostream>
 
 #include "ComputeNorm.h"
 #include <liatools.h>
-
+using namespace std;
+using namespace alize;
 
 int main(int argc, char* argv[])
 {
-    using namespace std;
-    using namespace alize;
   ConfigChecker cc;
-
-  // Needed params
   cc.addStringParam("testNistFile",true, true,"target_seg score file");
-  cc.addStringParam("normType",true, true,"tnorm|znorm|ztnorm");
-
-  // Optionnal 
-  cc.addStringParam("tnormNistFile",false,true,"imp_seg score file");
-  cc.addStringParam("znormNistFile",false,true,"target_imp score file");
-  cc.addStringParam("ztnormNistFile",false,true,"imp_imp score file");
-
+  cc.addStringParam("normType",true, true,"tnorm|znorm|ztnorm|tznorm, the normalization method (ztnorm is outputing both tnorm and ztnorm scores, tznorm both tznorm and znorm scores)");
+  cc.addStringParam("tnormNistFile",false,true,"imp_seg score file, impostor scores used for tnorm and ztnorm");
+  cc.addStringParam("znormNistFile",false,true,"target_imp score file, impostor scores used for znorm and ztnorm");
+  cc.addStringParam("ztnormNistFile",false,true,"imp_imp score file, impostor scores used for ztnorm and tznorm");
+  cc.addStringParam("outputFileBaseName",true, true,"the output file(s) basename");
+  cc.addStringParam("znormFilesExtension",false, true,"znorm output file extension (default='.znorm'");
+  cc.addStringParam("ztnormFilesExtension",false, true,"ztnorm output file extension (default='.znorm'");
+  cc.addStringParam("tnormFilesExtension",false, true,"tnorm output file extension (default='.tnorm'");
+  cc.addStringParam("tznormFilesExtension",false, true,"tznorm output file extension (default='.tznorm'");
+  cc.addStringParam("cohortFilePath",false, true,"cohort files path, for selectTargetDependentCohortInFile");
+  cc.addStringParam("cohortFileExt",false, true,"cohort files extension, for selectTargetDependentCohortInFile");
+  cc.addIntegerParam("maxIdNb",false, true,"Max target speakers - use to fix the max number of znorm score distributions (default=1000)");
+  cc.addIntegerParam("maxSegNb",false, true,"Max test segments - use to fix the max number of tnorm score distributions (default=1000)");
+  cc.addIntegerParam("maxScoreDistribNb",false, true,"Max scores per distribution - use to fix the max number of score in a distribution (default=1000)");
+  cc.addStringParam("selectType",false, true,"Define the score selection method,'noSelect|selectNBestByTestSegment|selectTargetDependentCohortInFile'  (default='noSelect')");
+  cc.addIntegerParam("fieldGender",false, true,"The field for gender in the nist file format (default=0)");
+  cc.addIntegerParam("fieldName",false, true,"The field for gender in the nist file format (default=1)");
+  cc.addIntegerParam("fieldDecision",false, true,"The field for gender in the nist file format (default=2)");
+  cc.addIntegerParam("fieldSeg",false, true,"The field for gender in the nist file format (default=3)");
+  cc.addIntegerParam("fieldLLR",false, true,"The field for gender in the nist file format (default=4)");
   try {
       CmdLine cmdLine(argc, argv);
       if (cmdLine.displayHelpRequired()){
-	cout << "****************************************" << endl;
+	cout << "************************************" << endl;
 	cout << "********** ComputeNorm.exe *************" << endl;
-	cout << "****************************************" << endl;
+	cout << "************************************" << endl;
 	cout << endl;
-	cout << "Apply Z-T-ZT Norm to a Score File" << endl;
+	cout << "Apply Z-T-ZT or ZT Norm to a Score File" << endl<< "ztnorm includes tnorm"<<endl;
         cout <<endl<<cc.getParamList()<<endl;
         return 0;  
       }
       if (cmdLine.displayVersionRequired()){
-        cout <<"Version 2-beta"<<endl;
+        cout <<"Version 3"<<endl;
       } 
       Config tmp;
       cmdLine.copyIntoConfig(tmp);
@@ -103,6 +54,22 @@ int main(int argc, char* argv[])
       if (verbose) verboseLevel=1;else verboseLevel=0;
       if (config.existsParam("verboseLevel"))verboseLevel=config.getParam("verboseLevel").toLong();
       if (verboseLevel>0) verbose=true;
+      // Initialize the default values for the parameters TODO : add this option in the addParam functions...
+ 	  if(!config.existsParam("znormFilesExtension")) config.setParam("znormFilesExtension",".znorm");
+ 	  if(!config.existsParam("tnormFilesExtension")) config.setParam("tnormFilesExtension",".tnorm");
+	  if(!config.existsParam("ztnormFilesExtension")) config.setParam("ztnormFilesExtension",".ztnorm");
+	  if(!config.existsParam("tznormFilesExtension")) config.setParam("tznormFilesExtension",".tznorm");
+	  if(!config.existsParam("maxIdNb")) config.setParam("maxIdNb","1000");
+	  if(!config.existsParam("maxSegNb")) config.setParam("maxSegNb","1000");
+	  if(!config.existsParam("maxScoreDistribNb")) config.setParam("maxScoreDistribNb","1000");
+	  if(!config.existsParam("selectType")) config.setParam("selectType","noSelect");
+	  if(!config.existsParam("fieldGender")) config.setParam("fieldGender","0");
+	  if(!config.existsParam("fieldName")) config.setParam("fieldName","1");
+	  if(!config.existsParam("fieldDecision")) config.setParam("fieldDecision","2");	  	  	  	  	  	  	   	  
+	  if(!config.existsParam("fieldSeg")) config.setParam("fieldSeg","3");	  	  	  	  	  	  	   	  
+	  if(!config.existsParam("fieldLLR")) config.setParam("fieldLLR","4");	  	  	  	  	  	  	   	  
+
+      // start the prog!
       ComputeNorm(config);
     }
 catch (alize::Exception& e) {cout << e.toString() << endl << cc.getParamList()<< endl;}
