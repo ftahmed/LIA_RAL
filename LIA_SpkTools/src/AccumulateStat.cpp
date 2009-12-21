@@ -1,3 +1,6 @@
+//ADDED by Christophe just for SVN test
+
+
 // AccumulateStat.cpp
 // This file is a part of LIA Softwares LIA_SpkDet and LIA_SpkSeg, based on ALIZE toolkit 
 // LIA_SpkDet is a free, open tool for speaker recognition
