@@ -270,6 +270,7 @@ double accumulateStatEMThreaded(StatServer &ss,FeatureServer &fs,MixtureStat &em
     rc = pthread_create(&threads[t], &attr, EMthread, (void *)&thread_data_array[t]);		
     if (rc) throw Exception("ERROR; return code from pthread_create() is ",__FILE__,rc);
     }
+    if (verbose) cout<<"(AccumulateStatEM) Computing on thread"<<endl;    
     pthread_attr_destroy(&attr);
     for(unsigned long t=0; t<NUM_THREADS; t++) {
       rc = pthread_join(threads[t], (void **)&status);
