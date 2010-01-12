@@ -14,7 +14,8 @@ int main(int argc, char* argv[])
   cc.addStringParam("saveInitModel",false,true,"if set (default), save the initial model");
   cc.addStringParam("labelSelectedFrames",true,true,"the segments with this label are used for training the worldmodel");
   cc.addFloatParam("baggedFrameProbability",true,true,"defines the % of frames taken for each iterations");
-  cc.addFloatParam("baggedFrameProbabilityInit",false,true,"defines the % of frames taken BY COMPONENT for the initializing of the mixture- mandatory if init from scratch");
+  cc.addFloatParam("baggedFrameProbabilityInit",false,true,"NOT LONGER USED IN TRAINWORLD !! deprecated and remplaced by nbFrameToSelect (defines the % of frames taken BY COMPONENT for the initializing of the mixture- mandatory if init from scratch)");
+  cc.addIntegerParam("nbFrameToSelect",false,true,"Defines the number of frames selected to initialise one component, default=50 ");
   cc.addIntegerParam("baggedMinimalLength",false,true,"minimum length for selected segments in bagged (default=3)");
   cc.addIntegerParam("baggedMaximalLength",false,true,"maximal length for selected segments in bagged (default=7)");
   cc.addFloatParam("initVarianceFlooring",true,true,"variance control parameters - relative to global data variance - initial value (moved during the it)");
@@ -28,6 +29,7 @@ int main(int argc, char* argv[])
   cc.addBooleanParam("use01",false,true,"if set at true, don't compute the global mean and cov but uses 0 mean and 1 cov");
   cc.addBooleanParam("componentReduction",false,true,"if set reduce the number of components at each it, selecting the best weights until targetDistribCount (default false)");
   cc.addIntegerParam("targetMixtureDistribCount",false,true,"final number of components if componentReduction is selected"); 
+  cc.addIntegerParam("initRand",false,true,"initialisation of the random generator for bagged set of data (default=0)"); 
 
 
   try {
