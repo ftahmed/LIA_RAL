@@ -48,7 +48,7 @@
 //  uniquely characterize a person=92s voice or to identify with absolute
 //  certainty an individual from his or her voice.]
 //
-// Contact Jean-Francois Bonastre (jean-francois.bonastre@lia.univ-avignon.fr) for
+// Contact Jean-Francois Bonastre (jean-francois.bonastre@univ-avignon.fr) for
 // more information about the licence or the use of LIA_SpkDet or LIA_SpkSeg
 
 #if !defined(ALIZE_TrainTools_cpp)
@@ -70,9 +70,8 @@ TrainCfg::TrainCfg(Config &config){
  _finalVarianceCeiling  = config.getParam("finalVarianceCeiling").toDouble();    
  _nbTrainIt = config.getParam("nbTrainIt").toLong();                             // number of  it 
  _baggedFrameProbability= config.getParam("baggedFrameProbability").toDouble();  // Defines the percentage of frames used for one IT
- if (config.existsParam("baggedFrameProbabilityInit")) _baggedFrameProbabilityInit =config.getParam("baggedFrameProbabilityInit").toDouble();  
+ if (config.existsParam("baggedFrameProbabilityInit")) _baggedFrameProbabilityInit =config.getParam("baggedFrameProbabilityInit").toDouble();  // TODO : SUPRESS (deprecated)
  else _baggedFrameProbabilityInit=0;// Defines the percentage of frames BY COMPONENT used for the init from scratch
- 
  if (config.existsParam("normalizeModel")) _normalizeModel=config.getParam("normalizeModel").toBool();// normalize the world (at each iteration) or not (default)
  else _normalizeModel=false;
  if (_normalizeModel){
@@ -692,8 +691,9 @@ MixtureGD &mixtureInit(MixtureServer &ms,FeatureServer **fsTab,SegCluster **segT
   unsigned long nbTotalFrame=0;
   for (unsigned long stream=0;stream<nbStream;stream++)
     nbTotalFrame+=(unsigned long) ((double)totalFrame(*segTab[stream])*weightTab[stream]);
-  double nbFrameToSelect=trainCfg.getBaggedFrameProbabilityInit()*nbTotalFrame;
-  nbFrameToSelect/=distribCount;  // by component
+  double nbFrameToSelect=50;
+  if (config.existsParam("nbFrameToSelect")) nbFrameToSelect=config.getParam("nbFrameToSelect").toLong();
+  
   if (verbose) cout <<"mixtureInit, total frames with stream weighting["<<nbTotalFrame<<"] total frame to select by component["<<nbFrameToSelect<<"]"<<endl;                                                        
   // Init the bagged probablity vector : one probability by frame
   DoubleVector baggedProbaA(nbStream,nbStream);
@@ -703,9 +703,9 @@ MixtureGD &mixtureInit(MixtureServer &ms,FeatureServer **fsTab,SegCluster **segT
       baggedItA[stream]=1;
       double baggedTmp=baggedProbaA[stream];
       while (baggedTmp>1){
-	  baggedItA[stream]++;
-	  baggedTmp/=baggedProbaA[stream]/baggedItA[stream];
-      }
+	  	baggedItA[stream]++;
+	  	baggedTmp/=baggedProbaA[stream]/baggedItA[stream];
+      	}
       baggedProbaA[stream]=baggedTmp;
   }
   if (debug || verbose) cout << "bagged proba init ok"<<endl;
@@ -1023,7 +1023,9 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
 		DoubleVector & globalMean,DoubleVector &globalCov,MixtureGD* &world,TrainCfg &trainCfg){ 
   unsigned long initialDistribCount=world->getDistribCount();
   double varianceFlooring = trainCfg.getInitVarFloor();
-  double varianceCeiling  = trainCfg.getInitVarCeil();   
+  double varianceCeiling  = trainCfg.getInitVarCeil(); 
+  unsigned long initRand=0; //initRand allows to run several TrainWorld using different set of (random) data
+  if (config.existsParam("initRand")) initRand=config.getParam("initRand").toLong();  
   unsigned long minimumLength=3;
   unsigned long maximumLength=7;
   if (config.existsParam("baggedMinimalLength")) minimumLength=config.getParam("baggedMinimalLength").toLong();
@@ -1042,7 +1044,7 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
       unsigned long nbTotalFrame=0;
       for (unsigned long stream=0;stream<nbStream;stream++) nbTotalFrame+=(unsigned long) ((double)totalFrame(*segTab[stream])*weightTab[stream]);
       double nbFrameToSelect=trainCfg.getBaggedFrameProbability()*nbTotalFrame;
-      if (verbose) cout <<"total frames with stream weighting["<<nbTotalFrame<<"] total frame to select ["<<nbFrameToSelect<<"]"<<endl;
+      if (verbose) cout <<"total frames with stream weighting["<<nbTotalFrame<<"] total frame to select ["<<(unsigned long) nbFrameToSelect<<"]"<<endl;
       emAcc.resetEM();  
       double llkPreviousIt=0;
       for(unsigned long stream=0;stream<nbStream;stream++){
@@ -1056,7 +1058,7 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
 	  if (debug || verboseLevel) cout <<"Stream["<<stream<<"] Bagged="<<baggedProba<<endl;
 	  SegServer segServer;                                        // Create a local segment server 
 	  SegCluster & baggedFramesCluster=segServer.createCluster(1,"",""); // Create the cluster for describing the selected frames
-          srand(((trainIt+1)*200)+(((stream+1)*20)+(baggedIt+1)));   
+      srand(((trainIt+1+initRand)*200)+(((stream+1)*20)+(baggedIt+1)));   
 	  baggedSegments(*segTab[stream],baggedFramesCluster,baggedProba,minimumLength,maximumLength);
 	  llkPreviousIt+=accumulateStatEM(ss,*fsTab[stream],emAcc,baggedFramesCluster,config);                        // Compute EM statistics
 	}
@@ -1086,7 +1088,7 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
       }
       if (trainCfg.getNormalizeModel()) normalizeMixture(*world,trainCfg,config);	
  
-      if (verbose) cout << "Partial Train it["<<trainIt<<"] (take care, it corresponds to the previous it,0 means init likelihood) ="<<llkPreviousIt<<" Nb Frames="<<emAcc.getEMFeatureCount()<<endl;
+      if (verbose) cout << "Partial Train it["<<trainIt<<"] (take care, it corresponds to the previous it,0 means init likelihood) ="<<llkPreviousIt<<" Nb Frames="<<(unsigned long) emAcc.getEMFeatureCount()<<endl;
        if (verboseLevel>2) cout << "Train it["<<trainIt <<"] Complete LLK=[" << meanLikelihood(ss,fsTab,segTab,nbStream,*world,config)<< "]"<<endl;    
       ss.deleteMixtureStat(emAcc);
 
