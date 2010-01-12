@@ -119,7 +119,7 @@ class TrainCfg{
   bool _normalizeModelMeanOnly;
   unsigned long _normalizeModelNbIt;
   double _baggedFrameProbability;
-  double _baggedFrameProbabilityInit;
+  double _baggedFrameProbabilityInit; //deprecated
   bool _componentReduction;
   unsigned long _targetDistribCount;
  public:
@@ -133,7 +133,7 @@ class TrainCfg{
   bool getNormalizeModelMeanOnly(){return _normalizeModelMeanOnly;}
   unsigned long getNormalizeModelNbIt(){return _normalizeModelNbIt;}
   double getBaggedFrameProbability(){return _baggedFrameProbability;}
-  double getBaggedFrameProbabilityInit(){return _baggedFrameProbabilityInit;}
+  double getBaggedFrameProbabilityInit(){return _baggedFrameProbabilityInit;}// TODO : suppress (deprecated)
   bool getComponentReduction(){return _componentReduction;}
   unsigned long getTargetDistribCount(){return _targetDistribCount;}
   void setInitVarFlooring (double v){_initVarianceFlooring=v;}
@@ -145,7 +145,7 @@ class TrainCfg{
   void setNormalizeModelMeanOnly(bool v){_normalizeModelMeanOnly=v;}  
   void setNormalizeModelNbIt(unsigned long v){_normalizeModelNbIt=v;}
   void setBaggedFrameProbability(double v){_baggedFrameProbability=v;}
-  void setBaggedFrameProbabilityInit(double v){_baggedFrameProbabilityInit=v;}
+  void setBaggedFrameProbabilityInit(double v){_baggedFrameProbabilityInit=v;}// TODO : suppress (deprecated)
   void showConfig(ostream &);
 };
 // Mixture and ditrib tools
