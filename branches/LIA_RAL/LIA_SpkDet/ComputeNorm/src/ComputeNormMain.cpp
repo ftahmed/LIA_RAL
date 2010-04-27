@@ -30,7 +30,9 @@ int main(int argc, char* argv[])
   cc.addIntegerParam("fieldLLR",false, true,"The field for gender in the nist file format (default=4)");
   cc.addStringParam("impostorIDList",false, true,"If the option is set, it limits the used impostor scores to the one of the given list");
   cc.addIntegerParam("meanMode",false,true,"Score distrib mean computation mode. 0 classical, 1 median (default 0)"); 
-  cc.addFloatParam("percentScoreUsed",false,true,"% of scores used for mean/std computation. highest scores are discarded (default 1.0)");  
+  cc.addFloatParam("percentH",false,true,"% of higest scores discarded (default 0)");  
+  cc.addFloatParam("percentL",false,true,"% of lowest scores discarded (default 0)");  
+  
   try {
       CmdLine cmdLine(argc, argv);
       if (cmdLine.displayHelpRequired()){
@@ -70,7 +72,9 @@ int main(int argc, char* argv[])
 	  if(!config.existsParam("fieldSeg")) config.setParam("fieldSeg","3");	  	  	  	  	  	  	   	  
 	  if(!config.existsParam("fieldLLR")) config.setParam("fieldLLR","4");	  
 	  if(!config.existsParam("meanMode")) config.setParam("meanMode","0");
-	  if(!config.existsParam("percentScoreUsed")) config.setParam("percentScoreUsed","1.0");
+	  if(!config.existsParam("percentH")) config.setParam("percentH","0.0");
+	  if(!config.existsParam("percentL")) config.setParam("percentL","0.0");
+	  
 	  
 	  	  	  	  	  	  	   	  
 
