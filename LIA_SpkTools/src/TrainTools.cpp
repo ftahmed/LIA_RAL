@@ -780,15 +780,21 @@ MixtureGD &mixtureInit(MixtureServer &ms,FeatureServer **fsTab, SegCluster **seg
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compute the MLLR transformation for means of a input Model and store it in an output Model
-DoubleSquareMatrix computeMLLR (MixtureGD &inM,MixtureGD& outM,unsigned long frameCount, Config &config){
+
+// remplacement de toutes les matrices carrées par des Matrices rectangulaires
+// Dimension de W (vectsize , vectsize+1)
+// Dimension de Z (vectsize, vectsize+1)
+// Dimension de G (vectsize +1 , vectsize +1) (en fait on a vectisze Matrices G : une par distribution)
+
+Matrix <double> computeMLLR (MixtureGD &inM,MixtureGD& outM,unsigned long frameCount, Config &config){
 	StatServer ss(config);
 
 
 if(verbose)cout<<"MLLR begins"<<endl;
 	unsigned long distribCount=inM.getDistribCount();	        // number of gaussians in the Mixture	
 	unsigned long vectSize= inM.getVectSize();				// dimension of the gaussians
-	DoubleSquareMatrix W (vectSize+1); 				       // MMLR transformation matrix  (one unused colunn)
-	DoubleSquareMatrix Z(vectSize+1);				// matrix  (one unused colunn)
+	Matrix <double> W (vectSize, vectSize+1); 				// MMLR transformation matrix 
+	Matrix <double> Z(vectSize, vectSize+1);				// matrix  (one unused colunn)
 	W.setAllValues(0);
 	Z.setAllValues(0);
 	
@@ -840,17 +846,17 @@ if(verbose)cout<<"MLLR begins"<<endl;
 	}
 	if(verboseLevel >= 1)cout<<"W complete"<<endl<<"Computing new means"<<endl;
 	
-		//Compute the mean vector of outModel
+	//Compute the mean vector of outModel
 	for (unsigned long j=0; j<distribCount;j++){
 		DoubleVector meanOut(vectSize, vectSize);
 		DistribGD & distri = inM.getDistrib(j);
 		DoubleVector &mean= distri.getMeanVect();
-		for (unsigned long i=0;i<vectSize;i++) meanOut[i]=W(i,0);	//initialize the mean vector
+		for (unsigned long i=0;i<vectSize;i++) meanOut[i]=W(i,0);	//initialize the mean vector with the offset
 		for (unsigned long i=0;i<vectSize;i++) {
 			for (unsigned long k=0;k<vectSize;k++) meanOut[i]+=W(i,k+1)*mean[k];
 			}
 		outM.getDistrib(j).setMeanVect(meanOut);	//update the mean vector of the out Mixture
-		}
+	}
 	
 	if(verbose) cout<<"MLLR finished, New Means computed"<<endl;
 		
@@ -859,6 +865,7 @@ if(verbose)cout<<"MLLR begins"<<endl;
 
 return W;
 }
+
 
 // The main function for estimate a client model by bayesian adaptattion of a aprioriModel model
 // Using EM and MAP 
@@ -880,8 +887,11 @@ void adaptModel(Config& config,StatServer &ss,MixtureServer &ms,FeatureServer &f
     if (verbose)cout <<"ML (partial) estimate it["<<trainIt<<"] (take care, it corresponds to the previous it,0 means init likelihood) = "
 		     <<llkPreviousIt<<endl;
     if(mapCfg.getMethod()=="MLLR") {
-	    DoubleSquareMatrix W=computeMLLR(aprioriModel,clientMixture,frameCount,config);			//MLLR adaptation
-            outputDSM(W,clientMixture,config) ;
+	    //DoubleSquareMatrix W=computeMLLR(aprioriModel,clientMixture,frameCount,config);			//MLLR adaptation
+	    Matrix <double> W=computeMLLR(aprioriModel,clientMixture,frameCount,config);			//MLLR adaptation
+            //outputDSM(W,clientMixture,config) ;
+	    String MLLR_matrix = "MLLR_matrix.mat";
+	    W.save(MLLR_matrix, config);
      } 
     else {
                 computeMAP(ms,aprioriModel,clientMixture,frameCount,config);               // Bayesian Adaptation client=MAP(aprioriModel,client)
