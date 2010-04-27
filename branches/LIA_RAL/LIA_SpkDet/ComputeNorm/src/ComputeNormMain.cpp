@@ -23,12 +23,14 @@ int main(int argc, char* argv[])
   cc.addIntegerParam("maxIdNb",false, true,"Max target speakers - use to fix the max number of znorm score distributions (default=1000)");
   cc.addIntegerParam("maxSegNb",false, true,"Max test segments - use to fix the max number of tnorm score distributions (default=1000)");
   cc.addIntegerParam("maxScoreDistribNb",false, true,"Max scores per distribution - use to fix the max number of score in a distribution (default=1000)");
-  cc.addStringParam("selectType",false, true,"Define the score selection method,'noSelect|selectNBestByTestSegment|selectTargetDependentCohortInFile'  (default='noSelect')");
   cc.addIntegerParam("fieldGender",false, true,"The field for gender in the nist file format (default=0)");
   cc.addIntegerParam("fieldName",false, true,"The field for gender in the nist file format (default=1)");
   cc.addIntegerParam("fieldDecision",false, true,"The field for gender in the nist file format (default=2)");
   cc.addIntegerParam("fieldSeg",false, true,"The field for gender in the nist file format (default=3)");
   cc.addIntegerParam("fieldLLR",false, true,"The field for gender in the nist file format (default=4)");
+  cc.addStringParam("impostorIDList",false, true,"If the option is set, it limits the used impostor scores to the one of the given list");
+  cc.addIntegerParam("meanMode",false,true,"Score distrib mean computation mode. 0 classical, 1 median (default 0)"); 
+  cc.addFloatParam("percentScoreUsed",false,true,"% of scores used for mean/std computation. highest scores are discarded (default 1.0)");  
   try {
       CmdLine cmdLine(argc, argv);
       if (cmdLine.displayHelpRequired()){
@@ -62,12 +64,15 @@ int main(int argc, char* argv[])
 	  if(!config.existsParam("maxIdNb")) config.setParam("maxIdNb","1000");
 	  if(!config.existsParam("maxSegNb")) config.setParam("maxSegNb","1000");
 	  if(!config.existsParam("maxScoreDistribNb")) config.setParam("maxScoreDistribNb","1000");
-	  if(!config.existsParam("selectType")) config.setParam("selectType","noSelect");
 	  if(!config.existsParam("fieldGender")) config.setParam("fieldGender","0");
 	  if(!config.existsParam("fieldName")) config.setParam("fieldName","1");
 	  if(!config.existsParam("fieldDecision")) config.setParam("fieldDecision","2");	  	  	  	  	  	  	   	  
 	  if(!config.existsParam("fieldSeg")) config.setParam("fieldSeg","3");	  	  	  	  	  	  	   	  
-	  if(!config.existsParam("fieldLLR")) config.setParam("fieldLLR","4");	  	  	  	  	  	  	   	  
+	  if(!config.existsParam("fieldLLR")) config.setParam("fieldLLR","4");	  
+	  if(!config.existsParam("meanMode")) config.setParam("meanMode","0");
+	  if(!config.existsParam("percentScoreUsed")) config.setParam("percentScoreUsed","1.0");
+	  
+	  	  	  	  	  	  	   	  
 
       // start the prog!
       ComputeNorm(config);
