@@ -233,7 +233,7 @@ void trainModel(Config& config,MixtureServer &ms,StatServer &ss,FeatureServer **
 		
 
 //  Function for adapting a model by MLLR
-DoubleSquareMatrix computeMLLR (MixtureGD &inM,MixtureGD& outM,unsigned long frameCount, Config &config);
+Matrix<double> computeMLLR (MixtureGD &inM,MixtureGD& outM,unsigned long frameCount, Config &config);
 
 
 #endif //!defined(ALIZE_TrainTools_h)
