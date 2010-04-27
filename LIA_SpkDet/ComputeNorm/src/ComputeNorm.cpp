@@ -15,6 +15,7 @@
 // JF Bonastre 27/4/2010 -cleaning and add 
 //                          * impostor (target independent) selection
 //                          * High score discard
+//							* Low score discard
 //                          * Median computation instead of aryth mean
                           
 
@@ -22,24 +23,15 @@ using namespace alize;
 using namespace std;
 
 
-//TODO move mean() and std() to getMean() and getStd()
 class DistribNorm{
 	LKVector tabScore; // table of norm scores
 	/* Use of LKVector ALIZE object, it provides sort functions */
 	String *tabIdImp; // table of norm scores
-//	double meanVal;   // storage of mean value to avoid recomputation
-//	double stdVal;    // storage of std value to avoid recomputation
 	Config conf;
-//	static int compare(const void*, const void*);
 	public:
 	void init();
 	void addScore(double, const String&);
-	/*void selectScore(XLine *, String);*/
-	//long findImp(String);
-	bool computeMeanStd(double &, double&, char,double);
-//	double std();
-//	double sum();
-//	double sum2(); 
+	bool computeMeanStd(double &, double&, char,double,double);
 	unsigned long size();
 	void print();
 	DistribNorm(Config &);  
@@ -47,9 +39,7 @@ class DistribNorm{
 };
 
 void DistribNorm::init(){
- 	tabScore.clear();
-//	meanVal = 0.0;
-//	stdVal = 1.0;	 
+ 	tabScore.clear(); 
 }
 
 unsigned long DistribNorm::size(){
@@ -72,118 +62,27 @@ void DistribNorm::addScore(double d, const String& idImp){
 	tabScore.addValue(t);
 }
 
-/*
-void DistribNorm::selectScore(XLine *l, String selectType){
-	
-	if(selectType == "noSelect"){		
-	 	return;	 
-	}	 
-	
-	if(selectType == "selectNBestByTestSegment"){
-		// Sort of impostor scores	
-		if(debug){
-			cout << "Sort the score" << endl;		 
-		}
-	 	sortScore();		 
-		// Size of impostor cohort
-		String sMax = conf.getParam("cohortNb");
-		unsigned long maxCohortNb = (unsigned long)sMax.toLong();	  	
-	 	
-		if(debug){
-			cout << "Size of the cohort " << maxCohortNb <<endl;		 
-		}
-		tabScore.setSize(maxCohortNb);
-		
-		if(debug){
-			cout << "Score distribution after selection" << endl;
-		 	print();
-		}
-		return;
-	}
-	
-       if(selectType == "selectTargetDependentCohortInFile"){
-		// Scores are selected according to an impostor name list, which is dependent on target model 
-	
-	 	if(debug){
-			cout << "Retrieve client dependent cohort score" << endl;		 
-		}
-		String impFile = conf.getParam("cohortFilePath")+l->getElement(1)+conf.getParam("cohortFilesExt");
-		cout << "ouverture file : " << impFile << endl;
-		XList impFileList(impFile, conf);
-	 	XLine * linep;
-		unsigned long impNb=0;
-		while ((linep=impFileList.getLine()) != NULL){
-			String impName = linep->getElement(0);
-			// necessary to find where is stored the informationof this impostor 
-			//
-			long indImp = findImp(impName);			
-			
-		        if(indImp == -1){
-				cout << "dependent Impostor name does not correspond to any impostor" << endl; 
-				exit(0);
-			 }
-			else{
-			 	//permutation of structures in tabScore 
-				LKVector::type t = tabScore[impNb];
-				tabScore[impNb] = tabScore[indImp];
-				tabScore[indImp] = t;
-				impNb++;				
-			}
-		}
-	    tabScore.setSize(impNb);
-		if(debug){
-			cout << "Score distribution after Cohort selection" << endl;
-		 	print();
-		}
-	       	
-	}	
-}
 
-long DistribNorm::findImp(String impName){
-	unsigned int i=0;
-	while((i < tabScore.size()) && (tabIdImp[tabScore[i].idx] != impName)) i++;
-	if(i == tabScore.size()) return -1;
-	return i;	
-}
-*/
-/*
-double DistribNorm::sum(){
- 	double sum=0.0;
-	if(tabScore.size() == 0){
-		cout << "No normalization score available for mean computation: mean=0.0" << endl;
-		return 0.0;
-	}
-	for(unsigned int i=0; i<tabScore.size(); i++)
-		sum += tabScore[i].lk;   	
-    return sum;
-}
-
-double DistribNorm::sum2(){
- 	double sum2=0.0;	
-	if(tabScore.size() == 0){
-		cout << "No normalization score available for mean computation: mean=0.0" << endl;
-		return 0.0;
-	}
-	for(unsigned int i=0; i<tabScore.size(); i++)
-		sum2 += tabScore[i].lk * tabScore[i].lk;   	
-	return sum2;
-}
-*/
-bool DistribNorm::computeMeanStd(double &mean,double &std,char mode, double percent){
+bool DistribNorm::computeMeanStd(double &mean,double &std,char mode, double percentH,double percentL){
 	if(tabScore.size() == 0) return false;
 	else{
 		unsigned long size=tabScore.size();
 		unsigned long begin=0;
-		if (percent<1.0){
+		unsigned long end=size;
+		if ((percentH!=0) || (percentL!=0)){
 			tabScore.descendingSort();
-			size=((double) size) * percent;
-			begin=tabScore.size()-size;
+			unsigned long discardH=((double) size) * percentH;
+			unsigned long discardL=((double) size) * percentL;
+			size-=(discardH+discardL);
+			begin=discardH;
+			end=tabScore.size()-discardL;
+			if (debug) cout<<"discardH["<<discardH<<"] discardL["<<discardL<<"] begin["<<begin<<"] end["<<end<<"]"<<endl;   
 		   }
 		double sum=0;
 		double sum2=0;
 		switch (mode){
 			case 0: //classical mean computation	
-					for(unsigned int i=begin; i<tabScore.size(); i++){
+					for(unsigned int i=begin; i<end; i++){
 						sum += tabScore[i].lk;  
 						sum2 += tabScore[i].lk * tabScore[i].lk;
 						}
@@ -192,11 +91,11 @@ bool DistribNorm::computeMeanStd(double &mean,double &std,char mode, double perc
 					break;
 			case 1: // Median instead of mean
 			 		mean=tabScore[begin+(size/2)].lk;
-			 		for(unsigned int i=begin; i<tabScore.size(); i++)
+			 		for(unsigned int i=begin; i<end; i++)
 						sum += abs(tabScore[i].lk-mean); 
 			 		std=sum/(double)(size);
 			 		break;
-			default: cout <<"mean comptation mode["<<mode<<"] unknown"<<endl;
+			default: cout <<"mean compute mode["<<mode<<"] unknown"<<endl;
 					 exit(0);
 		}  				
 	
@@ -248,19 +147,12 @@ class NormSeg{
 	unsigned long nb;
 	DistribNorm *distribNorm; // A pointer on an imp score distrib used once for computing the norm parameters
 	public:
-	double getMean(char,double);
-	double getStd(char,double);
-//	double getDistribNormMean();
-//	double getDistribNormStd();
-//	double getSum();
-//	double getSum2();
+	double getMean(char,double,double);
+	double getStd(char,double,double);
 	unsigned long getNb();
 	String getName();
-	void setMean(double);
-	void setStd(double);
-//	void setSum(double);
-//	void setSum2(double);
 	void setNb(unsigned long);
+	void set(String,double,double); 
 	void setName(String); 
 	void addScore(double,const String &imp);
         void newDistribNorm(Config &);
@@ -271,9 +163,9 @@ class NormSeg{
 void NormSeg::addScore(double score,const String & imp){
 	distribNorm->addScore(score,imp);
 }
-double NormSeg::getMean(char computeMode,double computePercent){
+double NormSeg::getMean(char computeMode,double discardH,double discardL){
 	if (!computed){
-			if (!distribNorm->computeMeanStd(mean,std,computeMode,computePercent)){
+			if (!distribNorm->computeMeanStd(mean,std,computeMode,discardH,discardL)){
 			cout << "Problem: empty impostor cohort"<<endl;
 			exit(0);
 		    }
@@ -282,9 +174,9 @@ double NormSeg::getMean(char computeMode,double computePercent){
 	return mean; 
 }
 
-double NormSeg::getStd(char computeMode,double computePercent){
+double NormSeg::getStd(char computeMode,double discardH,double discardL){
 	if (!computed){
-		if (!distribNorm->computeMeanStd(mean,std,computeMode,computePercent)){
+		if (!distribNorm->computeMeanStd(mean,std,computeMode,discardH,discardL)){
 			cout << "Problem: empty impostor cohort"<<endl;
 			exit(0);
 		    }
@@ -292,23 +184,7 @@ double NormSeg::getStd(char computeMode,double computePercent){
 		}
 	return std;	
 }
-/*
-double NormSeg::getDistribNormMean(){
-	return distribNorm->mean(); 
-}
 
-double NormSeg::getDistribNormStd(){
-	return distribNorm->std(); 
-}
-*/
-/*double NormSeg::getSum(){
-	return sum; 
-}*/
-
-/*double NormSeg::getSum2(){
-	return sum2; 
-}
-*/
 unsigned long NormSeg::getNb(){
 	return nb; 
 }
@@ -317,30 +193,20 @@ String NormSeg::getName(){
 	return name; 
 }
 
-void NormSeg::setMean(double m){
-	mean = m; 
-}
 
-void NormSeg::setStd(double s){
-	std = s; 
-}
-/*
-void NormSeg::setSum(double m){
-	sum = m; 
-}
-*/
-/*void NormSeg::setSum2(double m){
-	sum2 = m; 
-}
-*/
 void NormSeg::setNb(unsigned long m){
 	nb = m; 
 }
 
+void NormSeg::set(String n,double m,double s){
+	name = n; 
+	mean = m; 
+	std = s;
+	computed=true; 
+}
 void NormSeg::setName(String n){
 	name = n; 
 }
-
 void NormSeg::newDistribNorm(Config &config){
 	distribNorm=new DistribNorm(config);
 }
@@ -362,12 +228,11 @@ class Norm {
 	unsigned long findEntityIdxInNorm(String);             // Find where to add the seg info
         void moveEntity(unsigned long,unsigned long); // Make the room for the new Entity
 	unsigned long idxLastFind;             // Save the idx of the last segment search
-	char computeMode;             // The mode for mean/std computation
+	char _computeMode;             // The mode for mean/std computation
 								  // 0=classical
-								  // 1=MedianBased
-								  
-    double computePercent;        // % of scores used for computation.
-    							  // 1-computePercent high scores are discarded								  
+								  // 1=MedianBased							  
+    double _percentH;        // % of Highest scores discarded
+    double _percentL;        // % of Lowest scores discarded						  
 	public:
 	bool findEntityInNorm(String,unsigned long &);   
 	double getMean(unsigned long);
@@ -384,23 +249,16 @@ class Norm {
 	void setNormAndFreeDistrib();// Compute Mean and Cov and free the DistribNorm (per seg)
 //	void setNorm();              // Same, but not clean the DistribNorm
 	Norm(unsigned long);         // Create a Norm object, with x NormSeg and Classical mean/std computation
-	Norm(unsigned long, char,double); // Id but with a defined type of computation for mean/std
+	Norm(unsigned long, char,double,double); // Id but with a defined type of computation for mean/std
 	~Norm();
 };
 void Norm::setNormAndFreeDistrib(){
 	for(unsigned long idx=0; idx<nbNorm; idx++){
-		normTab[idx].getMean(computeMode,computePercent);
+		normTab[idx].getMean(_computeMode,_percentH,_percentL);
   		normTab[idx].deleteDistribNorm();	
 		}
 }
-/*
-void Norm::setNorm(){
-	for(unsigned long idx=0; idx<nbNorm; idx++){
-		normTab[idx].setMean(normTab[idx].getDistribNormMean());
-		normTab[idx].setStd(normTab[idx].getDistribNormStd()); 
-		}
-}
-*/
+
 void Norm::addScore(unsigned long idx,double score,const String & imp)
 {		
 	normTab[idx].addScore(score,imp);
@@ -452,26 +310,18 @@ bool Norm::findEntityInNorm(String name,unsigned long & idx){
 void Norm::print(){
 	cout << "nbnorm: " << nbNorm << endl; 
  	for(unsigned long i=0; i<nbNorm; i++){
-		cout << normTab[i].getName() << " " << normTab[i].getMean(computeMode,computePercent) << " " << normTab[i].getStd(computeMode,computePercent) << endl; 
+		cout << normTab[i].getName() << " " << getMean(i) << " " << getStd(i) << endl; 
 	} 
 }
 
 double Norm::getMean(unsigned long ind){
- 	return normTab[ind].getMean(computeMode,computePercent);
+ 	return normTab[ind].getMean(_computeMode,_percentH,_percentL);
 }
 
 double Norm::getStd(unsigned long ind){
- 	return normTab[ind].getStd(computeMode,computePercent);
-}
-/*
-double Norm::getSum(unsigned long ind){
- 	return normTab[ind].getSum();
+ 	return normTab[ind].getStd(_computeMode,_percentH,_percentL);
 }
 
-double Norm::getSum2(unsigned long ind){
- 	return normTab[ind].getSum2();
-}
-*/
 unsigned long Norm::getNb(unsigned long ind){
  	return normTab[ind].getNb();
 }
@@ -500,39 +350,23 @@ unsigned long Norm::addSeg(String name, double mean, double std){
 	unsigned long idx=findEntityIdxInNorm(name);   // Find where to add the seg info
 	if (debug) cout <<"addSeg:seg["<<name<<"] idx["<<idx<<"]"<<endl;
 	moveEntity(idx,nbNorm);                      // Make the room for the new Entity
-	normTab[idx].setName(name);
-	normTab[idx].setMean(mean);
-	normTab[idx].setStd(std); 
+	normTab[idx].set(name,mean,std); 
 	nbNorm++;	
     return (idx);
 }
-/*
-unsigned long Norm::addSeg(String name, double sum, double sum2, unsigned long nb){
-	if(nbNorm == (nbNormMax)){
-		cout << "Table norm Capacity out of bound: " << nbNorm << endl; 
-		exit(-1);
-	}
-	unsigned long idx=findEntityIdxInNorm(name); // Find where to add the seg info
-	moveEntity(idx,nbNorm);                      // Make the room for the new Entity
-	normTab[idx].setName(name);
-	normTab[idx].setSum(sum);
-	normTab[idx].setSum2(sum2); 
-	normTab[idx].setNb(nb); 
-	nbNorm++;
-    return (idx);
-}
-*/
+
 Norm::Norm(unsigned long nbMax){
-	 computeMode=0;
-	 computePercent=1.0;
+	 _computeMode=0;
+	 _percentH=0;_percentL=0;
 	 nbNorm = 0;
 	 nbNormMax = nbMax;
 	 normTab = new NormSeg[nbNormMax];
 	 idxLastFind=0;
 }
-Norm::Norm(unsigned long nbMax, char compute,double percent){
-	 computeMode=compute;
-	 computePercent=percent;
+Norm::Norm(unsigned long nbMax, char compute,double percentH,double percentL){
+	 _computeMode=compute;
+	 _percentH=percentH;
+	 _percentL=percentL;
 	 nbNorm = 0;
 	 nbNormMax = nbMax;
 	 normTab = new NormSeg[nbNormMax];
@@ -624,7 +458,9 @@ int ComputeNorm(Config& config)
     	impList.load(config.getParam("impostorIDList"),config);
     }  
 	char computeMode = (char)(config.getParam("meanMode").toLong()); // 0 classical, 1 Median
-	double computePercent=(double)(config.getParam("percentScoreUsed").toDouble());
+	double percentH=(double)(config.getParam("percentH").toDouble()); // % of hihest scores discarded
+	double percentL=(double)(config.getParam("percentL").toDouble());// % of lowest scores discarded
+	
 	// Define the field of the score files
 	char fieldGender=(char) config.getParam("fieldGender").toLong();
 	char fieldName=(char)config.getParam("fieldName").toLong();
@@ -639,7 +475,7 @@ int ComputeNorm(Config& config)
 	if(normType == "tnorm"){	
 		String outputFilename=outputNISTFileName+tnormFilesExtension;	   // Create the complete output file filename
 		ofstream outFile(outputFilename.c_str(),ios::out | ios::trunc);    // Initialise the output file
-	 	Norm tnorm(maxSegNb,computeMode,computePercent);// storage of mean and std for all segments
+	 	Norm tnorm(maxSegNb,computeMode,percentH,percentL);// storage of mean and std for all segments
 		String tnormNistFile = config.getParam("tnormNistFile"); 
 		if (verbose) cout << "Tnorm, reading tnormList"<<endl;
 		XList tnormList(tnormNistFile, config);
@@ -673,7 +509,7 @@ int ComputeNorm(Config& config)
 		ofstream outFile(outputFilename.c_str(),ios::out | ios::trunc);    // Initialise the output file
 		if(verbose) cout << endl << "Compute Znorm" << endl; 
 		// storage of mean and std for all segments
-	 	Norm znorm(maxIdNb,computeMode,computePercent);
+	 	Norm znorm(maxIdNb,computeMode,percentH,percentL);
 		String znormNistFile = config.getParam("znormNistFile"); 	
 		XList znormList(znormNistFile, config);
 	 	XLine * linep;		
@@ -710,9 +546,9 @@ int ComputeNorm(Config& config)
 		ofstream outFileZtnorm(outputZtnormFilename.c_str(),ios::out | ios::trunc);    // Initialise the output file
 		if(verbose) cout << endl << "Compute ZTnorm (and tnorm)" << endl; 
 		// storage of mean and std for all segments
-	 	Norm tnorm(maxSegNb,computeMode,computePercent);
-	 	Norm znorm(maxIdNb,computeMode,computePercent);
-		Norm ztnorm(maxSegNb,computeMode,computePercent);
+	 	Norm tnorm(maxSegNb,computeMode,percentH,percentL);
+	 	Norm znorm(maxIdNb,computeMode,percentH,percentL);
+		Norm ztnorm(maxSegNb,computeMode,percentH,percentL);
 		
 		String tnormNistFile = config.getParam("tnormNistFile"); 
 		String znormNistFile = config.getParam("znormNistFile"); 
@@ -781,9 +617,9 @@ int ComputeNorm(Config& config)
 		ofstream outFileZnorm(outputZnormFilename.c_str(),ios::out | ios::trunc);    // Initialise the output file
 		if(verbose) cout << endl << "Compute TZnorm" << endl; 
 		// storage of mean and std for all segments
-	 	Norm tnorm(maxSegNb,computeMode,computePercent);
-	 	Norm znorm(maxIdNb,computeMode,computePercent);
-		Norm tznorm(maxSegNb,computeMode,computePercent);
+	 	Norm tnorm(maxSegNb,computeMode,percentH,percentL);
+	 	Norm znorm(maxIdNb,computeMode,percentH,percentL);
+		Norm tznorm(maxSegNb,computeMode,percentH,percentL);
 		
 		String tnormNistFile = config.getParam("tnormNistFile"); 
 		String znormNistFile = config.getParam("znormNistFile"); 
