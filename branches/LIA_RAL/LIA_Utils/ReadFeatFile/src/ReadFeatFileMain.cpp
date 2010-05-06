@@ -56,7 +56,7 @@ int main (int argc, char *argv[])
   cc.addStringParam("inputFeatureFileName",true, true,"input feature file name");
   cc.addStringParam("loadFeatureFileFormat",false,true,"ALIZE and MISTRAL_RAL option, see doc. Give a feature format ie spro, raw, etc");
   cc.addStringParam("loadFeatureFileExtension",false,true,"ALIZE MISTRAL_RAL option, see doc. Give a feature ext ie .prm, .raw, etc");
-  cc.addStringParam("loadFeatureFilesPath",false,true,"ALIZE MISTRAL_RAL option, see doc. Give the feature path");
+  cc.addStringParam("featureFilesPath",false,true,"ALIZE MISTRAL_RAL option, see doc. Give the feature path");
   try {
         CmdLine cmdLine(argc, argv);
 	   if (cmdLine.displayVersionRequired()){
