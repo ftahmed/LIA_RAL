@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <cmath>
 #include <stdlib.h>
 #include "Svm.h"
-#include "svm.h"
+//#include "svm.h"
 #include "liatools.h"
 
 #define INF HUGE_VAL

@@ -2,7 +2,7 @@
 #define ALIZE_Svm_h
 
 #include "alize.h"
-#include "svm.h" 
+#include "libsvm.h" 
 using namespace alize;
 using namespace std;
 
