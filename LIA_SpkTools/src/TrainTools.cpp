@@ -1,55 +1,56 @@
-// TrainTools.cpp
-// This file is a part of LIA Softwares LIA_SpkDet and LIA_SpkSeg, based on ALIZE toolkit 
-// LIA_SpkDet is a free, open tool for speaker recognition
-// LIA_SpkSeg is a free, open tool for speaker segmentation
-// This project is a development project initiated and funded by the LIA lab.
-// See www.lia.univ-avignon.fr
-// 
-// ALIZE is needed for LIA_SpkDet and LIA_SpkSeg
-// for more information about ALIZE, see http://www.lia.univ-avignon.fr/heberges/ALIZE/
-// New version February 2005
-//
-// Copyright (C) 2004
-//  Laboratoire d'informatique d'Avignon [www.lia.univ-avignon.fr]
-// Main author:
-//  Jean-Francois Bonastre [jean-francois.bonastre@lia.univ-avignon.fr]
-//      
-// LIA_SpkDet and LIA_SpkSeg are free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-// This software is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// General Public License for more details.
-// You should have received a copy of the GNU General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// The LIA team as well as the ALIZE project want to highlight the limits of voice authentication
-// in a forensic context. 
-// The following paper proposes a good overview of this point:
-// [Bonastre J.F., Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-chagnolleau I.,
-//  Person  Authentification by Voice: A Need of Caution,
-//  Eurospeech 2003, Genova]
-// The conclusion of the paper of the paper is proposed bellow:
-// [Currently, it is not possible to completely determine whether the
-//  similarity between two recordings is due to the speaker or to other
-//  factors, especially when: (a) the speaker does not cooperate, (b) there
-//  is no control over recording equipment, (c) recording conditions are not 
-//  known, (d) one does not know whether the voice was disguised and, to a
-//  lesser extent, (e) the linguistic content of the message is not
-//  controlled. Caution and judgment must be exercised when applying speaker
-//  recognition techniques, whether human or automatic, to account for these
-//  uncontrolled factors. Under more constrained or calibrated situations,
-//  or as an aid for investigative purposes, judicious application of these
-//  techniques may be suitable, provided they are not considered as infallible.
-//  At the present time, there is no scientific process that enables one to
-//  uniquely characterize a person=92s voice or to identify with absolute
-//  certainty an individual from his or her voice.]
-//
-// Contact Jean-Francois Bonastre (jean-francois.bonastre@lia.univ-avignon.fr) for
-// more information about the licence or the use of LIA_SpkDet or LIA_SpkSeg
+/*
+This file is part of LIA_RAL which is a set of software based on ALIZE
+toolkit for speaker recognition. ALIZE toolkit is required to use LIA_RAL.
+
+LIA_RAL project is a development project was initiated by the computer
+science laboratory of Avignon / France (Laboratoire Informatique d'Avignon -
+LIA) [http://lia.univ-avignon.fr <http://lia.univ-avignon.fr/>]. Then it
+was supported by two national projects of the French Research Ministry:
+	- TECHNOLANGUE program [http://www.technolangue.net]
+	- MISTRAL program [http://mistral.univ-avignon.fr]
+
+LIA_RAL is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of
+the License, or any later version.
+
+LIA_RAL is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with LIA_RAL.
+If not, see [http://www.gnu.org/licenses/].
+
+The LIA team as well as the LIA_RAL project team wants to highlight the
+limits of voice authentication in a forensic context.
+The "Person Authentification by Voice: A Need of Caution" paper
+proposes a good overview of this point (cf. "Person
+Authentification by Voice: A Need of Caution", Bonastre J.F.,
+Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-
+chagnolleau I., Eurospeech 2003, Genova].
+The conclusion of the paper of the paper is proposed bellow:
+[Currently, it is not possible to completely determine whether the
+similarity between two recordings is due to the speaker or to other
+factors, especially when: (a) the speaker does not cooperate, (b) there
+is no control over recording equipment, (c) recording conditions are not
+known, (d) one does not know whether the voice was disguised and, to a
+lesser extent, (e) the linguistic content of the message is not
+controlled. Caution and judgment must be exercised when applying speaker
+recognition techniques, whether human or automatic, to account for these
+uncontrolled factors. Under more constrained or calibrated situations,
+or as an aid for investigative purposes, judicious application of these
+techniques may be suitable, provided they are not considered as infallible.
+At the present time, there is no scientific process that enables one to
+uniquely characterize a persones voice or to identify with absolute
+certainty an individual from his or her voice.]
+
+Copyright (C) 2004-2010
+Laboratoire d'informatique d'Avignon [http://lia.univ-avignon.fr]
+LIA_RAL admin [alize@univ-avignon.fr]
+Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
+*/
 
 #if !defined(ALIZE_TrainTools_cpp)
 #define ALIZE_TrainTools_cpp
@@ -70,9 +71,8 @@ TrainCfg::TrainCfg(Config &config){
  _finalVarianceCeiling  = config.getParam("finalVarianceCeiling").toDouble();    
  _nbTrainIt = config.getParam("nbTrainIt").toLong();                             // number of  it 
  _baggedFrameProbability= config.getParam("baggedFrameProbability").toDouble();  // Defines the percentage of frames used for one IT
- if (config.existsParam("baggedFrameProbabilityInit")) _baggedFrameProbabilityInit =config.getParam("baggedFrameProbabilityInit").toDouble();  
+ if (config.existsParam("baggedFrameProbabilityInit")) _baggedFrameProbabilityInit =config.getParam("baggedFrameProbabilityInit").toDouble();  // TODO : SUPRESS (deprecated)
  else _baggedFrameProbabilityInit=0;// Defines the percentage of frames BY COMPONENT used for the init from scratch
- 
  if (config.existsParam("normalizeModel")) _normalizeModel=config.getParam("normalizeModel").toBool();// normalize the world (at each iteration) or not (default)
  else _normalizeModel=false;
  if (_normalizeModel){
@@ -692,8 +692,9 @@ MixtureGD &mixtureInit(MixtureServer &ms,FeatureServer **fsTab,SegCluster **segT
   unsigned long nbTotalFrame=0;
   for (unsigned long stream=0;stream<nbStream;stream++)
     nbTotalFrame+=(unsigned long) ((double)totalFrame(*segTab[stream])*weightTab[stream]);
-  double nbFrameToSelect=trainCfg.getBaggedFrameProbabilityInit()*nbTotalFrame;
-  nbFrameToSelect/=distribCount;  // by component
+  double nbFrameToSelect=50;
+  if (config.existsParam("nbFrameToSelect")) nbFrameToSelect=config.getParam("nbFrameToSelect").toLong();
+  
   if (verbose) cout <<"mixtureInit, total frames with stream weighting["<<nbTotalFrame<<"] total frame to select by component["<<nbFrameToSelect<<"]"<<endl;                                                        
   // Init the bagged probablity vector : one probability by frame
   DoubleVector baggedProbaA(nbStream,nbStream);
@@ -703,9 +704,9 @@ MixtureGD &mixtureInit(MixtureServer &ms,FeatureServer **fsTab,SegCluster **segT
       baggedItA[stream]=1;
       double baggedTmp=baggedProbaA[stream];
       while (baggedTmp>1){
-	  baggedItA[stream]++;
-	  baggedTmp/=baggedProbaA[stream]/baggedItA[stream];
-      }
+	  	baggedItA[stream]++;
+	  	baggedTmp/=baggedProbaA[stream]/baggedItA[stream];
+      	}
       baggedProbaA[stream]=baggedTmp;
   }
   if (debug || verbose) cout << "bagged proba init ok"<<endl;
@@ -780,15 +781,21 @@ MixtureGD &mixtureInit(MixtureServer &ms,FeatureServer **fsTab, SegCluster **seg
 
 //--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compute the MLLR transformation for means of a input Model and store it in an output Model
-DoubleSquareMatrix computeMLLR (MixtureGD &inM,MixtureGD& outM,unsigned long frameCount, Config &config){
+
+// remplacement de toutes les matrices carrées par des Matrices rectangulaires
+// Dimension de W (vectsize , vectsize+1)
+// Dimension de Z (vectsize, vectsize+1)
+// Dimension de G (vectsize +1 , vectsize +1) (en fait on a vectisze Matrices G : une par distribution)
+
+Matrix <double> computeMLLR (MixtureGD &inM,MixtureGD& outM,unsigned long frameCount, Config &config){
 	StatServer ss(config);
 
 
 if(verbose)cout<<"MLLR begins"<<endl;
 	unsigned long distribCount=inM.getDistribCount();	        // number of gaussians in the Mixture	
 	unsigned long vectSize= inM.getVectSize();				// dimension of the gaussians
-	DoubleSquareMatrix W (vectSize+1); 				       // MMLR transformation matrix  (one unused colunn)
-	DoubleSquareMatrix Z(vectSize+1);				// matrix  (one unused colunn)
+	Matrix <double> W (vectSize, vectSize+1); 				// MMLR transformation matrix 
+	Matrix <double> Z(vectSize, vectSize+1);				// matrix  (one unused colunn)
 	W.setAllValues(0);
 	Z.setAllValues(0);
 	
@@ -840,17 +847,17 @@ if(verbose)cout<<"MLLR begins"<<endl;
 	}
 	if(verboseLevel >= 1)cout<<"W complete"<<endl<<"Computing new means"<<endl;
 	
-		//Compute the mean vector of outModel
+	//Compute the mean vector of outModel
 	for (unsigned long j=0; j<distribCount;j++){
 		DoubleVector meanOut(vectSize, vectSize);
 		DistribGD & distri = inM.getDistrib(j);
 		DoubleVector &mean= distri.getMeanVect();
-		for (unsigned long i=0;i<vectSize;i++) meanOut[i]=W(i,0);	//initialize the mean vector
+		for (unsigned long i=0;i<vectSize;i++) meanOut[i]=W(i,0);	//initialize the mean vector with the offset
 		for (unsigned long i=0;i<vectSize;i++) {
 			for (unsigned long k=0;k<vectSize;k++) meanOut[i]+=W(i,k+1)*mean[k];
 			}
 		outM.getDistrib(j).setMeanVect(meanOut);	//update the mean vector of the out Mixture
-		}
+	}
 	
 	if(verbose) cout<<"MLLR finished, New Means computed"<<endl;
 		
@@ -859,6 +866,7 @@ if(verbose)cout<<"MLLR begins"<<endl;
 
 return W;
 }
+
 
 // The main function for estimate a client model by bayesian adaptattion of a aprioriModel model
 // Using EM and MAP 
@@ -880,8 +888,11 @@ void adaptModel(Config& config,StatServer &ss,MixtureServer &ms,FeatureServer &f
     if (verbose)cout <<"ML (partial) estimate it["<<trainIt<<"] (take care, it corresponds to the previous it,0 means init likelihood) = "
 		     <<llkPreviousIt<<endl;
     if(mapCfg.getMethod()=="MLLR") {
-	    DoubleSquareMatrix W=computeMLLR(aprioriModel,clientMixture,frameCount,config);			//MLLR adaptation
-            outputDSM(W,clientMixture,config) ;
+	    //DoubleSquareMatrix W=computeMLLR(aprioriModel,clientMixture,frameCount,config);			//MLLR adaptation
+	    Matrix <double> W=computeMLLR(aprioriModel,clientMixture,frameCount,config);			//MLLR adaptation
+            //outputDSM(W,clientMixture,config) ;
+	    String MLLR_matrix = "MLLR_matrix.mat";
+	    W.save(MLLR_matrix, config);
      } 
     else {
                 computeMAP(ms,aprioriModel,clientMixture,frameCount,config);               // Bayesian Adaptation client=MAP(aprioriModel,client)
@@ -983,16 +994,16 @@ void modelBasedadaptModel(Config& config,StatServer &ss,MixtureServer &ms,Featur
 //-------------------------------------------------------------------------
 void trainModel(Config& config,StatServer &ss,FeatureServer &fs,SegCluster& selectedSegments,
 			 DoubleVector & globalMean,DoubleVector &globalCov,MixtureGD &world,TrainCfg &trainCfg){ 
-  float varianceFlooring = trainCfg.getInitVarFloor();
-  float varianceCeiling  = trainCfg.getInitVarCeil();   
+  float varianceFlooring = (float)trainCfg.getInitVarFloor();
+  float varianceCeiling  = (float)trainCfg.getInitVarCeil();   
   if (verbose) trainCfg.showConfig();
   if (verboseLevel>1) cout << "Train It : initial model: ll world = " <<  meanLikelihood(ss,fs,world,selectedSegments,config)<< endl;
   try{   	
     for (unsigned long trainIt=0; trainIt<trainCfg.getNbTrainIt(); trainIt++){                           // Begin the initial EM iteration loop 
       MixtureStat& emAcc=ss.createAndStoreMixtureStat(world);             // Create a statistic accumulator using the init model
       // Set the variance control parameters
-      varianceFlooring = setItParameter(trainCfg.getInitVarFloor(),trainCfg.getFinalVarFloor(),trainCfg.getNbTrainIt(),trainIt);
-      varianceCeiling  = setItParameter(trainCfg.getInitVarCeil(),trainCfg.getFinalVarCeil(), trainCfg.getNbTrainIt(), trainIt);
+      varianceFlooring = (float)setItParameter(trainCfg.getInitVarFloor(),trainCfg.getFinalVarFloor(),trainCfg.getNbTrainIt(),trainIt);
+      varianceCeiling  = (float)setItParameter(trainCfg.getInitVarCeil(),trainCfg.getFinalVarCeil(), trainCfg.getNbTrainIt(), trainIt);
       if (verbose) cout << "Train it["<<trainIt<<"], Variance floor["<<varianceFlooring
 			<<"] ceiling["<<varianceCeiling<<"]"<<endl; 
       SegServer segServer;                                        // Create a local segment server 
@@ -1023,7 +1034,9 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
 		DoubleVector & globalMean,DoubleVector &globalCov,MixtureGD* &world,TrainCfg &trainCfg){ 
   unsigned long initialDistribCount=world->getDistribCount();
   double varianceFlooring = trainCfg.getInitVarFloor();
-  double varianceCeiling  = trainCfg.getInitVarCeil();   
+  double varianceCeiling  = trainCfg.getInitVarCeil(); 
+  unsigned long initRand=0; //initRand allows to run several TrainWorld using different set of (random) data
+  if (config.existsParam("initRand")) initRand=config.getParam("initRand").toLong();  
   unsigned long minimumLength=3;
   unsigned long maximumLength=7;
   if (config.existsParam("baggedMinimalLength")) minimumLength=config.getParam("baggedMinimalLength").toLong();
@@ -1042,7 +1055,7 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
       unsigned long nbTotalFrame=0;
       for (unsigned long stream=0;stream<nbStream;stream++) nbTotalFrame+=(unsigned long) ((double)totalFrame(*segTab[stream])*weightTab[stream]);
       double nbFrameToSelect=trainCfg.getBaggedFrameProbability()*nbTotalFrame;
-      if (verbose) cout <<"total frames with stream weighting["<<nbTotalFrame<<"] total frame to select ["<<nbFrameToSelect<<"]"<<endl;
+      if (verbose) cout <<"total frames with stream weighting["<<nbTotalFrame<<"] total frame to select ["<<(unsigned long) nbFrameToSelect<<"]"<<endl;
       emAcc.resetEM();  
       double llkPreviousIt=0;
       for(unsigned long stream=0;stream<nbStream;stream++){
@@ -1056,7 +1069,7 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
 	  if (debug || verboseLevel) cout <<"Stream["<<stream<<"] Bagged="<<baggedProba<<endl;
 	  SegServer segServer;                                        // Create a local segment server 
 	  SegCluster & baggedFramesCluster=segServer.createCluster(1,"",""); // Create the cluster for describing the selected frames
-          srand(((trainIt+1)*200)+(((stream+1)*20)+(baggedIt+1)));   
+      srand(((trainIt+1+initRand)*200)+(((stream+1)*20)+(baggedIt+1)));   
 	  baggedSegments(*segTab[stream],baggedFramesCluster,baggedProba,minimumLength,maximumLength);
 	  llkPreviousIt+=accumulateStatEM(ss,*fsTab[stream],emAcc,baggedFramesCluster,config);                        // Compute EM statistics
 	}
@@ -1065,7 +1078,10 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
       (*world) = emAcc.getEM(); // Get the EM estimate
       varianceControl(*world,varianceFlooring,varianceCeiling,globalCov);
       if (trainCfg.getComponentReduction()){
-	bool selectCompA[world->getDistribCount()];
+	// Tableau dynamique instanciÃ© sans pointeur (ancien code)
+	//bool selectCompA[world->getDistribCount()] TODO netoyage memoire
+	bool * selectCompA = new bool[world->getDistribCount()];
+
 	double diff=(initialDistribCount-trainCfg.getTargetDistribCount())/(double) trainCfg.getNbTrainIt();
 	unsigned long nbTop=initialDistribCount-(unsigned long)((double)(trainIt+1)*diff);
 	if (trainIt== (trainCfg.getNbTrainIt()-1)) nbTop=trainCfg.getTargetDistribCount();
@@ -1083,7 +1099,7 @@ void trainModelStream(Config& config,MixtureServer &ms,StatServer &ss,FeatureSer
       }
       if (trainCfg.getNormalizeModel()) normalizeMixture(*world,trainCfg,config);	
  
-      if (verbose) cout << "Partial Train it["<<trainIt<<"] (take care, it corresponds to the previous it,0 means init likelihood) ="<<llkPreviousIt<<" Nb Frames="<<emAcc.getEMFeatureCount()<<endl;
+      if (verbose) cout << "Partial Train it["<<trainIt<<"] (take care, it corresponds to the previous it,0 means init likelihood) ="<<llkPreviousIt<<" Nb Frames="<<(unsigned long) emAcc.getEMFeatureCount()<<endl;
        if (verboseLevel>2) cout << "Train it["<<trainIt <<"] Complete LLK=[" << meanLikelihood(ss,fsTab,segTab,nbStream,*world,config)<< "]"<<endl;    
       ss.deleteMixtureStat(emAcc);
 

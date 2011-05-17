@@ -1,43 +1,56 @@
-/****************************************************************************
-Svm.cpp
-Integration of SVM technology in ALIZE/LIA_SpkDet.
-Main Author: Nicolas Scheffer
-Date: January 2007
-Aim: Wrap libsvm for ALIZE to perform linear kernel for speaker verification systems
-Only save hyperplanes for a svm model, and then compute dot products for testing
-Take dense input in binary format (alize matrix format)
+/*
+This file is part of LIA_RAL which is a set of software based on ALIZE
+toolkit for speaker recognition. ALIZE toolkit is required to use LIA_RAL.
 
-Here's libsvm copyright:
-Copyright (c) 2000-2006 Chih-Chung Chang and Chih-Jen Lin
-All rights reserved.
+LIA_RAL project is a development project was initiated by the computer
+science laboratory of Avignon / France (Laboratoire Informatique d'Avignon -
+LIA) [http://lia.univ-avignon.fr <http://lia.univ-avignon.fr/>]. Then it
+was supported by two national projects of the French Research Ministry:
+	- TECHNOLANGUE program [http://www.technolangue.net]
+	- MISTRAL program [http://mistral.univ-avignon.fr]
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
+LIA_RAL is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of
+the License, or any later version.
 
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+LIA_RAL is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
 
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
+You should have received a copy of the GNU Lesser General Public
+License along with LIA_RAL.
+If not, see [http://www.gnu.org/licenses/].
 
-3. Neither name of copyright holders nor the names of its contributors
-may be used to endorse or promote products derived from this software
-without specific prior written permission.
+The LIA team as well as the LIA_RAL project team wants to highlight the
+limits of voice authentication in a forensic context.
+The "Person Authentification by Voice: A Need of Caution" paper
+proposes a good overview of this point (cf. "Person
+Authentification by Voice: A Need of Caution", Bonastre J.F.,
+Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-
+chagnolleau I., Eurospeech 2003, Genova].
+The conclusion of the paper of the paper is proposed bellow:
+[Currently, it is not possible to completely determine whether the
+similarity between two recordings is due to the speaker or to other
+factors, especially when: (a) the speaker does not cooperate, (b) there
+is no control over recording equipment, (c) recording conditions are not
+known, (d) one does not know whether the voice was disguised and, to a
+lesser extent, (e) the linguistic content of the message is not
+controlled. Caution and judgment must be exercised when applying speaker
+recognition techniques, whether human or automatic, to account for these
+uncontrolled factors. Under more constrained or calibrated situations,
+or as an aid for investigative purposes, judicious application of these
+techniques may be suitable, provided they are not considered as infallible.
+At the present time, there is no scientific process that enables one to
+uniquely characterize a persones voice or to identify with absolute
+certainty an individual from his or her voice.]
 
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
+Copyright (C) 2004-2010
+Laboratoire d'informatique d'Avignon [http://lia.univ-avignon.fr]
+LIA_RAL admin [alize@univ-avignon.fr]
+Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
+*/
 
 #if !defined(ALIZE_Svm_cpp)
 #define ALIZE_Svm_cpp
@@ -49,7 +62,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.*/
 #include <cmath>
 #include <stdlib.h>
 #include "Svm.h"
-#include "svm.h"
+//#include "svm.h"
 #include "liatools.h"
 
 #define INF HUGE_VAL
@@ -80,7 +93,7 @@ svm_parameter definesParameter (Config & config,Matrix <double> & mat) {
 		param.kernel_type = config.getParam("kernelType").toLong();
 	} else {param.kernel_type=LINEAR;}
 	param.degree = 1;
-	//param.gamma = 0;	// 1/k
+	param.gamma = 0;	// 1/k
 	param.coef0 = 0;
 	param.nu = 0.5;
 	param.cache_size = 10000;

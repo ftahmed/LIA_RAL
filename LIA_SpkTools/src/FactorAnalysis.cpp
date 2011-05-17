@@ -1,5 +1,56 @@
-// Factor Analysis.cpp
-// Main authors: Driss Matrouf, Nicolas Scheffer (integration)
+/*
+This file is part of LIA_RAL which is a set of software based on ALIZE
+toolkit for speaker recognition. ALIZE toolkit is required to use LIA_RAL.
+
+LIA_RAL project is a development project was initiated by the computer
+science laboratory of Avignon / France (Laboratoire Informatique d'Avignon -
+LIA) [http://lia.univ-avignon.fr <http://lia.univ-avignon.fr/>]. Then it
+was supported by two national projects of the French Research Ministry:
+	- TECHNOLANGUE program [http://www.technolangue.net]
+	- MISTRAL program [http://mistral.univ-avignon.fr]
+
+LIA_RAL is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of
+the License, or any later version.
+
+LIA_RAL is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with LIA_RAL.
+If not, see [http://www.gnu.org/licenses/].
+
+The LIA team as well as the LIA_RAL project team wants to highlight the
+limits of voice authentication in a forensic context.
+The "Person Authentification by Voice: A Need of Caution" paper
+proposes a good overview of this point (cf. "Person
+Authentification by Voice: A Need of Caution", Bonastre J.F.,
+Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-
+chagnolleau I., Eurospeech 2003, Genova].
+The conclusion of the paper of the paper is proposed bellow:
+[Currently, it is not possible to completely determine whether the
+similarity between two recordings is due to the speaker or to other
+factors, especially when: (a) the speaker does not cooperate, (b) there
+is no control over recording equipment, (c) recording conditions are not
+known, (d) one does not know whether the voice was disguised and, to a
+lesser extent, (e) the linguistic content of the message is not
+controlled. Caution and judgment must be exercised when applying speaker
+recognition techniques, whether human or automatic, to account for these
+uncontrolled factors. Under more constrained or calibrated situations,
+or as an aid for investigative purposes, judicious application of these
+techniques may be suitable, provided they are not considered as infallible.
+At the present time, there is no scientific process that enables one to
+uniquely characterize a persones voice or to identify with absolute
+certainty an individual from his or her voice.]
+
+Copyright (C) 2004-2010
+Laboratoire d'informatique d'Avignon [http://lia.univ-avignon.fr]
+LIA_RAL admin [alize@univ-avignon.fr]
+Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
+*/
 
 #if !defined(ALIZE_FactorAnalysis_cpp)
 #define ALIZE_FactorAnalysis_cpp
@@ -12,7 +63,7 @@
 #include<cmath>
 #include "SuperVectors.h"
 #include "RealVector.h"
-#ifdef THREAD
+#if defined(THREAD)
 #include <pthread.h>
 #endif
 
@@ -53,36 +104,36 @@ void FactorAnalysisStat::_init(XList & ndx,FeatureServer & fs,Config & config){
 	_D.setSize(_supervsize);
 
 	// Random Init for U or init with an existing one (used in traintarget for instance)
-	_U=Matrix<double>();
+	_matU=Matrix<double>();
 	if (config.existsParam("initChannelMatrix")) {
-		_U.load(config.getParam("initChannelMatrix"),config);
-		if (_U.cols()>_U.rows()) _U.transpose();
-		if (verbose) cout << "(FactorAnalysisStat) Init for Channel Matrix: "<< config.getParam("initChannelMatrix")<< ", rank: ["<<_U.cols() << "] sv size: [" << _U.rows() <<"]"<<endl;
-		_rang=_U.cols();
-		if (UBM.getDistribCount()*UBM.getVectSize()!=_U.rows()) throw Exception("Supervector size does not match with UBM model",__FILE__,__LINE__);
+		_matU.load(config.getParam("initChannelMatrix"),config);
+		if (_matU.cols()>_matU.rows()) _matU.transpose();
+		if (verbose) cout << "(FactorAnalysisStat) Init for Channel Matrix: "<< config.getParam("initChannelMatrix")<< ", rank: ["<<_matU.cols() << "] sv size: [" << _matU.rows() <<"]"<<endl;
+		_rang=_matU.cols();
+		if (UBM.getDistribCount()*UBM.getVectSize()!=_matU.rows()) throw Exception("Supervector size does not match with UBM model",__FILE__,__LINE__);
 	}
 	else {
 		_rang=config.getParam("channelMatrixRank").toLong();		
-		_U.setDimensions(_supervsize,_rang);
+		_matU.setDimensions(_supervsize,_rang);
 		srand48(_supervsize*_rang);
-		_U.randomInit();			
-		if (verbose) cout << "(FactorAnalysisStat) Random Init for Channel Matrix: "<<", rank: ["<<_U.cols() << "] sv size: [" << _U.rows() <<"]"<<endl;			
+		_matU.randomInit();			
+		if (verbose) cout << "(FactorAnalysisStat) Random Init for Channel Matrix: "<<", rank: ["<<_matU.cols() << "] sv size: [" << _matU.rows() <<"]"<<endl;			
 	}		
 		
 	// FA stats
-	_Y=Matrix<double>(_nb_speakers,_supervsize);
-	_X=Matrix<double>(_nb_sent,_rang);
-	_S_X=Matrix<double>(_nb_speakers,_supervsize);
-	_S_X_h=Matrix<double>(_nb_sent,_supervsize);	
-	_N_h=Matrix<double>(_nb_sent,_mixsize);	
-	_N=Matrix<double>(_nb_speakers,_mixsize);		
+	_matY=Matrix<double>(_nb_speakers,_supervsize);
+	_matX=Matrix<double>(_nb_sent,_rang);
+	_matS_X=Matrix<double>(_nb_speakers,_supervsize);
+	_matS_X_h=Matrix<double>(_nb_sent,_supervsize);	
+	_matN_h=Matrix<double>(_nb_sent,_mixsize);	
+	_matN=Matrix<double>(_nb_speakers,_mixsize);		
 	
-	_Y.setAllValues(0.0);
-	_X.setAllValues(0.0);	
-	_S_X.setAllValues(0.0);	
-	_S_X_h.setAllValues(0.0);	
-	_N_h.setAllValues(0.0);
-	_N.setAllValues(0.0);
+	_matY.setAllValues(0.0);
+	_matX.setAllValues(0.0);	
+	_matS_X.setAllValues(0.0);	
+	_matS_X_h.setAllValues(0.0);	
+	_matN_h.setAllValues(0.0);
+	_matN.setAllValues(0.0);
 			
 	_super_mean.setSize(_supervsize);
 	_super_invvar.setSize(_supervsize);
@@ -106,8 +157,8 @@ void FactorAnalysisStat::_init(XList & ndx,FeatureServer & fs,Config & config){
 		_l_h_inv.addObject(*(new DoubleSquareMatrix()),i);
 		_l_h_inv[i].setSize(_rang);
 	}		
-	if (verboseLevel >1) cout << "(FactorAnalysisStat) Y dimensions are: " << _Y.rows() <<","<<_Y.cols()<<"__ X dimensions are: "<< _X.rows() <<","<< _X.cols() <<endl << "(FactorAnalysisStat) FA Accumator Built"<<endl;     
-};
+	if (verboseLevel >1) cout << "(FactorAnalysisStat) Y dimensions are: " << _matY.rows() <<","<<_matY.cols()<<"__ X dimensions are: "<< _matX.rows() <<","<< _matX.cols() <<endl << "(FactorAnalysisStat) FA Accumator Built"<<endl;     
+};  
 
 void FactorAnalysisStat::computeAndAccumulateGeneralFAStats(FeatureServer &fs,Config & config){
 	SegServer segmentsServer;
@@ -122,8 +173,11 @@ void FactorAnalysisStat::computeAndAccumulateGeneralFAStats(FeatureServer &fs,Co
 void FactorAnalysisStat::computeAndAccumulateGeneralFAStats(SegCluster &selectedSegments,FeatureServer &fs,Config & config){
 	if (verbose) cout <<"(FactorAnalysisStat) Compute General FA Stats (Complete)" << endl;
 	double *N_h, *N, *S_X_h, *S_X,*ff;	
-	_N_h.setAllValues(0.0);_N.setAllValues(0.0);_S_X_h.setAllValues(0.0);_S_X.setAllValues(0.0);
-	N_h=_N_h.getArray(); N=_N.getArray(); S_X_h=_S_X_h.getArray();S_X=_S_X.getArray();
+	_matN_h.setAllValues(0.0);
+	_matN.setAllValues(0.0);
+	_matS_X_h.setAllValues(0.0);
+	_matS_X.setAllValues(0.0);
+	N_h=_matN_h.getArray(); N=_matN.getArray(); S_X_h=_matS_X_h.getArray();S_X=_matS_X.getArray();
 	
 	MixtureGD & UBM=_ms.getMixtureGD((unsigned long) 1);
 	MixtureGDStat &acc=_ss.createAndStoreMixtureStat(UBM);
@@ -171,7 +225,7 @@ void FactorAnalysisStat::computeAndAccumulateGeneralFAStatsTopGauss(FeatureServe
 	RealVector <double> _Prob; _Prob.setSize(_mixsize); double *Prob=_Prob.getArray();
 	RealVector <double> m_xh; m_xh.setSize(_supervsize);
 	double *super_mean, *N_h, *N, *S_X_h, *S_X,*ff;	
-	super_mean=_super_mean.getArray(); N_h=_N_h.getArray(); N=_N.getArray(); S_X_h=_S_X_h.getArray(); S_X=_S_X.getArray();
+	super_mean=_super_mean.getArray(); N_h=_matN_h.getArray(); N=_matN.getArray(); S_X_h=_matS_X_h.getArray(); S_X=_matS_X.getArray();
 	static unsigned long it=0;
 	MixtureGD & UBM=_ms.getMixtureGD((unsigned long) 1);
 	
@@ -274,8 +328,8 @@ void FactorAnalysisStat::substractSpeakerStats(){
 	unsigned long sent=0; 		
 	XLine *pline; String *pFile; fileList.rewind();
 
-	double *N_h=_N_h.getArray(); 
-	double *S_X_h=_S_X_h.getArray();
+	double *N_h=_matN_h.getArray(); 
+	double *S_X_h=_matS_X_h.getArray();
 
 	while((pline=fileList.getLine())!=NULL) { 
 		while((pFile=pline->getElement())!=NULL) {
@@ -301,8 +355,8 @@ void FactorAnalysisStat::substractChannelStats(){
 	fileList.rewind();
 	
 	double *super_mean=_super_mean.getArray();
-	double *N_h=_N_h.getArray(); 
-	double *S_X=_S_X.getArray();
+	double *N_h=_matN_h.getArray(); 
+	double *S_X=_matS_X.getArray();
 
 	while((pline=fileList.getLine())!=NULL) { 		
 		while((pFile=pline->getElement())!=NULL) {
@@ -327,11 +381,11 @@ void FactorAnalysisStat::getXEstimate(){
 	XLine *pline;
 	String *pFile;
 
-	_X.setAllValues(0.0);
+	_matX.setAllValues(0.0);
 
-	double *X=_X.getArray();	
-	double *U=_U.getArray();
-	double *S_X_h=_S_X_h.getArray();
+	double *X=_matX.getArray();	
+	double *U=_matU.getArray();
+	double *S_X_h=_matS_X_h.getArray();
 	double *aux=AUX.getArray();
 	double *super_invvar=_super_invvar.getArray();
 	
@@ -353,7 +407,7 @@ void FactorAnalysisStat::getXEstimate(){
 };
 
 void FactorAnalysisStat::estimateAndInverseL(Config & config){
-    #ifdef THREAD          
+    #if defined(THREAD)          
     if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0) estimateAndInverseLThreaded(config.getParam("numThread").toLong());
     else estimateAndInverseLUnThreaded();
     #else
@@ -373,8 +427,8 @@ void FactorAnalysisStat::estimateAndInverseLUnThreaded(){
 	String *pFile;
 	fileList.rewind();
 
-	double *N_h=_N_h.getArray(); 
-	double *U=_U.getArray();
+	double *N_h=_matN_h.getArray(); 
+	double *U=_matU.getArray();
 	double *LV=L.getArray();
 	double *super_invvar=_super_invvar.getArray();
 	
@@ -405,7 +459,7 @@ void FactorAnalysisStat::estimateAndInverseLUnThreaded(){
 /*****************************************************************************************************
 ********************* Threaed Version of L Matrices Inversion (Nico Scheffer)
 *****************************************************************************************************/
-#ifdef THREAD
+#if defined(THREAD)
 struct Lthread_data{
 	double *N_h;
 	double *U;
@@ -462,8 +516,8 @@ void *Lthread(void *threadarg) {
 void FactorAnalysisStat::estimateAndInverseLThreaded(unsigned long NUM_THREADS){
 	if (verbose) cout << "(FactorAnalysisStat) Inverse L Matrix Threads ... "<<endl;	
 	if (NUM_THREADS==0) throw Exception("Num threads can be 0",__FILE__,__LINE__);
-	double *N_h=_N_h.getArray(); 
-	double *U=_U.getArray();
+	double *N_h=_matN_h.getArray(); 
+	double *U=_matU.getArray();
 	double *super_invvar=_super_invvar.getArray();
 
 	int rc, status;
@@ -505,11 +559,11 @@ void FactorAnalysisStat::estimateAndInverseLThreaded(unsigned long NUM_THREADS){
 
 void FactorAnalysisStat::getYEstimate(){
 	if (verbose) cout << "(FactorAnalysisStat) Compute Y Estimate "<<endl;
-	_Y.setAllValues(0.0);
+	_matY.setAllValues(0.0);
 
-	double *N=_N.getArray(); 
-	double *Y=_Y.getArray();
-	double *S_X=_S_X.getArray();
+	double *N=_matN.getArray(); 
+	double *Y=_matY.getArray();
+	double *S_X=_matS_X.getArray();
 	double *D=_D.getArray();
 	double *super_invvar=_super_invvar.getArray();
 
@@ -522,7 +576,7 @@ void FactorAnalysisStat::getYEstimate(){
 };
 
 void FactorAnalysisStat::getUEstimate(Config & config){
-    #ifdef THREAD          
+    #if defined(THREAD)          
     if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0) getUEstimateThreaded(config.getParam("numThread").toLong());
     else getUEstimateUnThreaded();
     #else
@@ -537,10 +591,10 @@ void FactorAnalysisStat::getUEstimateUnThreaded(){
 	RealVector <double> R;
 	R.setSize(_rang);
 
-	double *N_h=_N_h.getArray(); 
-	double *X=_X.getArray();
-	double *S_X_h=_S_X_h.getArray();
-	double *U=_U.getArray();
+	double *N_h=_matN_h.getArray(); 
+	double *X=_matX.getArray();
+	double *S_X_h=_matS_X_h.getArray();
+	double *U=_matU.getArray();
 	double *RV=R.getArray();
 	double *LV=L.getArray();
 
@@ -564,7 +618,7 @@ void FactorAnalysisStat::getUEstimateUnThreaded(){
 			for(k=0;k<_rang;k++) 
 				U[i*_rang+j]+=L_InvV[j*_rang+k]*RV[k];
 	}*/
-	_U.setAllValues(0.0);
+	_matU.setAllValues(0.0);
 	for(unsigned long g=0;g<_mixsize;g++){		
 		L.setAllValues(0.0);
 		// Estimate LU for the gaussian g
@@ -596,7 +650,7 @@ void FactorAnalysisStat::getUEstimateUnThreaded(){
 /*****************************************************************************************************
 ********************* Threaded Version of U Matrix Computation (Nico Scheffer)
 *****************************************************************************************************/
-#ifdef THREAD
+#if defined(THREAD)
 struct Uthread_data{
 	double *N_h;
 	double *U;
@@ -669,11 +723,11 @@ void *Uthread(void *threadarg) {
 
 void FactorAnalysisStat::getUEstimateThreaded(unsigned long NUM_THREADS){
 	if (verbose) cout << "(FactorAnalysisStat) Compute U Estimate Threaded "<<endl;	
-	double *N_h=_N_h.getArray(); 
-	double *X=_X.getArray();
-	double *S_X_h=_S_X_h.getArray();
-	double *U=_U.getArray();
-	_U.setAllValues(0.0);
+	double *N_h=_matN_h.getArray(); 
+	double *X=_matX.getArray();
+	double *S_X_h=_matS_X_h.getArray();
+	double *U=_matU.getArray();
+	_matU.setAllValues(0.0);
 	if (NUM_THREADS==0) throw Exception("Num threads can not be 0",__FILE__,__LINE__);
 	int rc, status;
 	if (NUM_THREADS > _mixsize) NUM_THREADS=_mixsize;
@@ -788,7 +842,7 @@ void FactorAnalysisStat::getFactorAnalysisModel(MixtureGD& FA,String& file) {
 	sigma_s.setSize(_supervsize);
 	for (unsigned long i=0;i<_mixsize;i++) 	
 		for (unsigned long j=0;j<_vsize;j++) 
-			sigma_s[i*_vsize+j]=FA.getDistrib(i).getCov(j)/(_tau+_N(loc,i));
+			sigma_s[i*_vsize+j]=FA.getDistrib(i).getCov(j)/(_tau+_matN(loc,i));
 		
 	/// Compute sigma_s+*sigma_w
 	RealVector <double> sum,prod;
@@ -836,7 +890,7 @@ void FactorAnalysisStat::setYFromModel(MixtureGD& M,String & file){
 	RealVector<double> w(_supervsize,_supervsize);
 	modelToSv(_ms.getMixtureGD(0),w); // get UBM
 	for (unsigned long i=0;i<v.size();i++) 
-		_Y(loc,i)=(v[i]-w[i])/_D[i];
+		_matY(loc,i)=(v[i]-w[i])/_D[i];
 };
 
 void FactorAnalysisStat::estimateXForKnownSpeaker(MixtureGD & M,String & file,Config &config) {
@@ -849,11 +903,11 @@ void FactorAnalysisStat::estimateXForKnownSpeaker(MixtureGD & M,String & file,Co
 		this->substractSpeakerStats();
 		this->getXEstimate();
 	}
-	double * X=_X.getArray();
+	double * X=_matX.getArray();
 	for (unsigned long i=0;i<_supervsize;i++) {
 		double ux=0.0;
 		for (unsigned long j=0;j<_rang;j++) {
-			ux+=_U(i,j)*X[j];
+			ux+=_matU(i,j)*X[j];
 		}
 		v[i]+=ux;
 	}
@@ -865,7 +919,7 @@ void FactorAnalysisStat::getUX(RealVector <double> &ux,String& file) {
 	unsigned long idx=_ndxTable.sessionNb(file);
 	for (unsigned long i=0;i<_supervsize;i++)
 		for (unsigned long j=0;j<_rang;j++) 
-			ux[i]+=_U(i,j)*_X(idx,j);
+			ux[i]+=_matU(i,j)*_matX(idx,j);
 };
 
 // Compute supervector of client M_s_h=M+Dy_s and get a model
@@ -891,7 +945,7 @@ void FactorAnalysisStat::getMplusDY(RealVector <double> &Sp, String& file) {
 	Sp.setAllValues(0.0);
 	unsigned long loc=_ndxTable.locNb(file);		
 	for (unsigned long i=0;i<_supervsize;i++)
-		Sp[i]=_super_mean[i]+_D[i]*_Y(loc,i);
+		Sp[i]=_super_mean[i]+_D[i]*_matY(loc,i);
 };
 
 // Compute supervector of client M_s_h=M+Dy_s+Ux and get a model

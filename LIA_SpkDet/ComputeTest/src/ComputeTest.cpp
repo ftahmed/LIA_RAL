@@ -1,56 +1,57 @@
-// ComputeTest.cpp
-// This file is a part of LIA Software LIA_SpkDet, based on ALIZE toolkit 
-// LIA_SpkDet  is a free, open tool for speaker recognition
-// LIA_SpkDet is a development project initiated and funded by the LIA lab.
-// See www.lia.univ-avignon.fr
-// 
-// ALIZE is needed for LIA_SpkDet
-// for more information about ALIZE, see http://www.lia.univ-avignon.fr/heberges/ALIZE/
-//
-// Copyright (C) 2004
-//  Laboratoire d'informatique d'Avignon [www.lia.univ-avignon.fr]
-//  Jean-Francois Bonastre [jean-francois.bonastre@lia.univ-avignon.fr]
-//      
-// LIA_SpkDet is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-// This software is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// General Public License for more details.
-// You should have received a copy of the GNU General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// The LIA team as well as the ALIZE project want to highlight the limits of voice authentication
-// in a forensic context. 
-// The following paper proposes a good overview of this point:
-// [Bonastre J.F., Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-chagnolleau I.,
-//  Person  Authentification by Voice: A Need of Caution,
-//  Eurospeech 2003, Genova]
-// The conclusion of the paper of the paper is proposed bellow:
-// [Currently, it is not possible to completely determine whether the
-//  similarity between two recordings is due to the speaker or to other
-//  factors, especially when: (a) the speaker does not cooperate, (b) there
-//  is no control over recording equipment, (c) recording conditions are not 
-//  known, (d) one does not know whether the voice was disguised and, to a
-//  lesser extent, (e) the linguistic content of the message is not
-//  controlled. Caution and judgment must be exercised when applying speaker
-//  recognition techniques, whether human or automatic, to account for these
-//  uncontrolled factors. Under more constrained or calibrated situations,
-//  or as an aid for investigative purposes, judicious application of these
-//  techniques may be suitable, provided they are not considered as infallible.
-//  At the present time, there is no scientific process that enables one to
-//  uniquely characterize a person=92s voice or to identify with absolute
-//  certainty an individual from his or her voice.]
-//
-// Contact Jean-Francois Bonastre (jean-francois.bonastre@lia.univ-avignon.fr) for
-// more information about the licence or the use of LIA_SpkDet
-// First version 15/07/2004
-// New version 23/02/2005
-// FA version 8/12/2006 (NS)
- 
+/*
+This file is part of LIA_RAL which is a set of software based on ALIZE
+toolkit for speaker recognition. ALIZE toolkit is required to use LIA_RAL.
+
+LIA_RAL project is a development project was initiated by the computer
+science laboratory of Avignon / France (Laboratoire Informatique d'Avignon -
+LIA) [http://lia.univ-avignon.fr <http://lia.univ-avignon.fr/>]. Then it
+was supported by two national projects of the French Research Ministry:
+	- TECHNOLANGUE program [http://www.technolangue.net]
+	- MISTRAL program [http://mistral.univ-avignon.fr]
+
+LIA_RAL is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of
+the License, or any later version.
+
+LIA_RAL is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with LIA_RAL.
+If not, see [http://www.gnu.org/licenses/].
+
+The LIA team as well as the LIA_RAL project team wants to highlight the
+limits of voice authentication in a forensic context.
+The "Person Authentification by Voice: A Need of Caution" paper
+proposes a good overview of this point (cf. "Person
+Authentification by Voice: A Need of Caution", Bonastre J.F.,
+Bimbot F., Boe L.J., Campbell J.P., Douglas D.A., Magrin-
+chagnolleau I., Eurospeech 2003, Genova].
+The conclusion of the paper of the paper is proposed bellow:
+[Currently, it is not possible to completely determine whether the
+similarity between two recordings is due to the speaker or to other
+factors, especially when: (a) the speaker does not cooperate, (b) there
+is no control over recording equipment, (c) recording conditions are not
+known, (d) one does not know whether the voice was disguised and, to a
+lesser extent, (e) the linguistic content of the message is not
+controlled. Caution and judgment must be exercised when applying speaker
+recognition techniques, whether human or automatic, to account for these
+uncontrolled factors. Under more constrained or calibrated situations,
+or as an aid for investigative purposes, judicious application of these
+techniques may be suitable, provided they are not considered as infallible.
+At the present time, there is no scientific process that enables one to
+uniquely characterize a persones voice or to identify with absolute
+certainty an individual from his or her voice.]
+
+Copyright (C) 2004-2010
+Laboratoire d'informatique d'Avignon [http://lia.univ-avignon.fr]
+LIA_RAL admin [alize@univ-avignon.fr]
+Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
+*/
+
 #if !defined(ALIZE_ComputeTest_cpp)
 #define ALIZE_ComputeTest_cpp
  
@@ -60,6 +61,7 @@
 #include <cmath> 
 #include <liatools.h>
 #include "ComputeTest.h"
+#include "AccumulateJFAStat.h"
 #include <sys/stat.h>
 
 using namespace alize;
@@ -168,8 +170,7 @@ void WindowLLR::dec(unsigned long idxFrame){
 	    for (unsigned long cIdx=0;cIdx<_nClient;cIdx++)
 		(*_accLlrA)[cIdx]-=(*_llrM)(_bIdx,cIdx);	    	    
 	    _bIdx=(_bIdx+1)%_size;
-	}
-	_count-=(_dec-1);
+	}	_count-=(_dec-1);
 	(*_idxA)[(_bIdx+_count-1)%_size]=idxFrame;	
     }   
 }
@@ -308,6 +309,7 @@ int ComputeTest(Config& config)
 	    }
 	  }  
 	}  
+	clientAcc.deleteAllObjects();
       }
       if ((nbMaxMixtureInMemory>0)&&(ms.getMixtureCount()>nbMaxMixtureInMemory)){
 	if (verbose) cout <<"Cleaning the mixture server from 1 to "<<ms.getMixtureCount()<<endl;
@@ -321,6 +323,582 @@ int ComputeTest(Config& config)
     cout << e.toString().c_str() << endl;
   }
   return 0;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//	Compute Test using Dot Product in the JFA framework
+//-------------------------------------------------------------------------------------------------------
+int ComputeTestDotProduct(Config& config){ 
+	
+	String inputNDXFileName = config.getParam("ndxFilename");                        		// NDX inputfile filename - described the experience 
+	String inputWorldFilename = config.getParam("inputWorldFilename");                   	// World model file used for the LLR computation
+	String outputNISTFileName = config.getParam("outputFilename");                       	// Result file in NIST style (.nist) result file format
+	String labelSelectedFrames =config.getParam("labelSelectedFrames");              	// label for selected frames - Only the frames from segments 
+	// with this label  will be used
+	
+	String gender=config.getParam("gender");                                         				// gives the gender for compatibility reasons with NIST standard output file
+	real_t decisionThreshold;
+	if (config.existsParam("decisionThreshold"))                                     				// Define the threshold if needed
+		decisionThreshold=config.getParam("decisionthreshold").toDouble();
+	else decisionThreshold=0;
+	unsigned long maxClientLine=CST_MAX_CLIENT_LINE;                                 		// Max of target Id for a ndx line
+	if (config.existsParam("maxTargetLine")) 	maxClientLine=config.getParam("maxTargetLine").toLong();
+	
+	if (config.getParam_debug())debug=true;  else debug=false;
+	
+	try{   
+		XList ndx(inputNDXFileName,config);                                    					// Read the test definition file (ndx)
+		XLine *linep;                                                          								// Pointor on the current test line
+		ndx.getLine(0);
+		MixtureServer ms(config);
+		StatServer ss(config, ms);
+		MixtureGD& world = ms.loadMixtureGD(inputWorldFilename);               			// Load the world model
+		ofstream outNist(outputNISTFileName.c_str(),ios::out | ios::trunc);    			// Initialise the output file
+		
+		//Load JFA MAtrices
+		Matrix<double> U, V; 
+		DoubleVector D;
+		
+		//Initialise EC matrix
+		if(config.existsParam("eigenChannelMatrix")){
+			String uName = config.getParam("matrixFilesPath") + config.getParam("eigenChannelMatrix") + config.getParam("loadMatrixFilesExtension");
+			U.load (uName, config);
+		}
+		else{
+			unsigned long sS = world.getVectSize() * world.getDistribCount();
+			U.setDimensions(1,sS);
+			U.setAllValues(0.0);
+		}
+		
+		//Initialise EV matrix
+		if(config.existsParam("eigenVoiceMatrix")){
+			String vName = config.getParam("matrixFilesPath") + config.getParam("eigenVoiceMatrix") + config.getParam("loadMatrixFilesExtension");
+			V.load (vName, config);
+		}
+		else{
+			unsigned long sS = world.getVectSize() * world.getDistribCount();
+			V.setDimensions(1,sS);
+			V.setAllValues(0.0);
+		}
+		
+		//Initialise D matrix
+		if(config.existsParam("DMatrix")){
+			String dName = config.getParam("matrixFilesPath") + config.getParam("DMatrix") + config.getParam("loadMatrixFilesExtension");
+			Matrix<double> tmpD(dName, config);
+			
+			if( (tmpD.rows() != 1) || ( tmpD.cols() != world.getVectSize()*world.getDistribCount() ) ){
+				throw Exception("Incorrect dimension of D Matrix",__FILE__,__LINE__);
+			}
+			else{
+				D.setSize(world.getVectSize()*world.getDistribCount());
+				D.setAllValues(0.0);
+				for(unsigned long i=0; i<world.getVectSize()*world.getDistribCount(); i++){
+					D[i] = tmpD(0,i);
+				}
+			}
+		}
+		else{
+			unsigned long sS = world.getVectSize() * world.getDistribCount();
+			D.setSize(sS,sS);
+			D.setAllValues(0.0);
+		}
+		
+		//Test Loop
+		while ((linep=ndx.getLine()) != NULL){
+			
+			String &featureFileName=linep->getElement(0);                        			//get the testfile basename
+			XLine featureFileListp;
+			featureFileListp.addElement(linep->getElement(0));						//read the name of the test segment file
+			XList ndx; ndx.addLine() = featureFileListp;
+			JFAAcc jfaAcc(ndx,config);
+			
+			//Load existing JFA matrices
+			jfaAcc.loadEV(V, config); jfaAcc.loadEC(U, config); jfaAcc.loadD(D); 
+			
+			//Compute JFA stats
+			jfaAcc.computeAndAccumulateJFAStat(config);
+			
+			//Estimate uEuT for the test
+			jfaAcc.estimateUEUT(config);
+			
+			//Estimate and inverse L matrices
+			jfaAcc.estimateAndInverseL_EC(config);
+			
+			//Substract the UBM mean vector from the test segment (Y and X are null at this time)
+			jfaAcc.substractMplusVYplusDZ(config);
+			
+			//Estimate X for the test segment
+			jfaAcc.estimateX(config);
+			
+			//substract (M + Ux)*N
+			jfaAcc.substractMplusUX();
+			
+			double sumN = 0.0;
+			double *n = jfaAcc.getN().getArray();
+			for(unsigned long i=0; i<jfaAcc.getNDistrib(); i++){
+				sumN += n[i];
+			}
+			
+			double *f_x = jfaAcc.getF_X().getArray();
+			for(unsigned long i=0; i<jfaAcc.getSvSize();i++){
+				f_x[i] /=  sumN;
+			}
+			
+			//Target loop
+			for(unsigned long i = 1; i< linep->getElementCount(); i++){
+				String &fileName=linep->getElement(i); 
+				
+				//Load client supervector
+				String clientSvFile = config.getParam("vectorFilesPath") + "/" + fileName + config.getParam("vectorFilesExtension");
+				Matrix<double> clientSV( clientSvFile , config);
+				
+				//scores = M*F';
+				double score = 0.0;
+				double *clientsv = clientSV.getArray();
+				for(unsigned long j=0; j<jfaAcc.getSvSize(); j++){
+					score += clientsv[j] * f_x[j];
+				}
+				
+				//Write the score
+				char decision=setDecision(score,decisionThreshold);                       // take a decision
+				outputResultLine(score, fileName,featureFileName ,gender ,decision,outNist);	
+			}
+		}                                                                                   // end of the NDX line loop
+		outNist.close(); 
+	} // end try
+	catch (Exception& e){ 
+		cout << e.toString().c_str() << endl;
+	}
+	return 0;
+}
+
+
+//-------------------------------------------------------------------------------------------------------
+//	Compute Test using classical GMM in the JFA framework
+//-------------------------------------------------------------------------------------------------------
+int ComputeTestJFA(Config& config){
+	
+	String inputNDXFileName = config.getParam("ndxFilename");                        			// NDX inputfile filename - described the experience 
+	String inputWorldFilename = config.getParam("inputWorldFilename");                   		// World model file used for the LLR computation
+	String outputNISTFileName = config.getParam("outputFilename");                    	   	// Result file in NIST style (.nist) result file format
+	String labelSelectedFrames =config.getParam("labelSelectedFrames");            	  		// label for selected frames - Only the frames from segments 
+	// with this label  will be used
+	
+	String gender=config.getParam("gender");                                         				// gives the gender for compatibility reasons with NIST standard output file
+	real_t decisionThreshold;
+	if (config.existsParam("decisionThreshold"))                                     				// Define the threshold if needed
+		decisionThreshold=config.getParam("decisionthreshold").toDouble();
+	else decisionThreshold=0;
+	unsigned long maxClientLine=CST_MAX_CLIENT_LINE;                                 		// Max of target Id for a ndx line
+	if (config.existsParam("maxTargetLine")) maxClientLine=config.getParam("maxTargetLine").toLong();
+	unsigned long nbMaxMixtureInMemory=1; 								//delete models
+	if (config.existsParam("nbMaxMixtureInMemory")) nbMaxMixtureInMemory=config.getParam("nbMaxMixtureInMemory").toLong();
+	unsigned long worldDecime=1;
+	if (config.existsParam("worldDecime")) 
+		worldDecime=config.getParam("worldDecime").toLong(); 
+	if (config.getParam_debug())debug=true;  else debug=false;
+	if (verbose){
+		cout << "Compute Test, Decime mode["<<worldDecime<<"] ";
+		cout << "File Mode- 1 LLR by file" <<endl;
+	}
+	
+	try{   
+		
+		XList ndx(inputNDXFileName,config);                                    						// Read the test definition file (ndx)
+		XLine *linep;                                                          								// Pointor on the current test line
+		ndx.getLine(0);
+		MixtureServer ms(config);
+		StatServer ss(config, ms);
+		MixtureGD& world = ms.loadMixtureGD(inputWorldFilename);               				// Load the world model
+		ofstream outNist(outputNISTFileName.c_str(),ios::out | ios::trunc);    				// Initialise the output file
+		
+		//Load JFA MAtrices
+		Matrix<double> U, V; 
+		DoubleVector D;
+		
+		//Initialise EC matrix
+		if(config.existsParam("eigenChannelMatrix")){
+			String uName = config.getParam("matrixFilesPath") + config.getParam("eigenChannelMatrix") + config.getParam("loadMatrixFilesExtension");
+			U.load (uName, config);
+		}
+		else{
+			U.setDimensions(1,world.getVectSize());
+			U.setAllValues(0.0);
+		}
+		
+		//Initialise EV matrix
+		if(config.existsParam("eigenVoiceMatrix")){
+			String vName = config.getParam("matrixFilesPath") + config.getParam("eigenVoiceMatrix") + config.getParam("loadMatrixFilesExtension");
+			V.load (vName, config);
+		}
+		else{
+			V.setDimensions(1,world.getVectSize());
+			V.setAllValues(0.0);
+		}
+		
+		//Initialise D matrix
+		if(config.existsParam("DMatrix")){
+			String dName = config.getParam("matrixFilesPath") + config.getParam("DMatrix") + config.getParam("loadMatrixFilesExtension");
+			Matrix<double> tmpD(dName, config);
+			
+			if( (tmpD.rows() != 1) || ( tmpD.cols() != world.getVectSize()*world.getDistribCount() ) ){
+				throw Exception("Incorrect dimension of D Matrix",__FILE__,__LINE__);
+			}
+			else{
+				D.setSize(world.getVectSize()*world.getDistribCount());
+				D.setAllValues(0.0);
+				for(unsigned long i=0; i<world.getVectSize()*world.getDistribCount(); i++){
+					D[i] = tmpD(0,i);
+				}
+			}
+		}
+		else{
+			D.setSize(world.getVectSize(),world.getVectSize()*world.getDistribCount());
+			D.setAllValues(0.0);
+		}
+		
+		//Test Loop
+		while ((linep=ndx.getLine()) != NULL){
+			
+			String &featureFileName=linep->getElement(0);                        				//get the testfile basename
+			XLine featureFileListp;
+			featureFileListp.addElement(linep->getElement(0));							//read the name of the test segment file
+			XList ndx; ndx.addLine() = featureFileListp;
+			JFAAcc jfaAcc(ndx,config);
+			
+			//ajout
+			MixtureGD & tmpWorld=ms.duplicateMixture (ms.getMixtureGD(0), DUPL_DISTRIB);
+			
+			///Load existing JFA matrices
+			jfaAcc.loadEV(V, config); jfaAcc.loadEC(U, config); jfaAcc.loadD(D); 
+			
+			///Compute JFA stats
+			jfaAcc.computeAndAccumulateJFAStat(config);
+			
+			//IL FAUT FAIRE COMME POUR LE TRAIN : ESTIMATION CONJOINTE DE Y ET X, ENSUITE ON SPLIT
+			//ET ON NORMALISE LES TRAMES AVEC UX
+			
+			
+			///Estimate uEuT for the test
+			jfaAcc.estimateUEUT(config);
+			
+			///Estimate and inverse L matrices
+			jfaAcc.estimateAndInverseL_EC(config);
+			
+			///Substract the UBM mean vector from the test segment (Y and X are null at this time)
+			jfaAcc.substractMplusVYplusDZ(config);
+			
+			///Estimate X for the test segment
+			jfaAcc.estimateX(config);
+			
+			///Estimate XYZ on the test segment and normalise the features by substracting Ux
+			FeatureServer fs(config,featureFileName);
+			jfaAcc.substractUXfromFeatures(fs,config);
+			
+			///TEST decalage modeles
+			//on estime Ux sur le segment de test
+			//DoubleVector UX(jfaAcc.getSvSize()); UX.setSize(jfaAcc.getSvSize());
+			//double *ux=UX.getArray();
+			//jfaAcc.getUX(UX,featureFileName);
+			
+			//on shift l'ubm
+			//cerr<<"SHIFT THE UBM"<<endl;
+			//for(unsigned long i=0; i<jfaAcc.getNDistrib(); i++){
+			//	for(unsigned long j=0; j<jfaAcc.getVectSize(); j++){
+			//		double sh = ux[i*jfaAcc.getVectSize() + j]+ world.getDistrib(i).getMean(j) ;	
+			//		tmpWorld.getDistrib(i).setMean(sh, j);
+			//	}
+			//}
+			///FIN ESSAI decalage modeles
+			
+			if (verbose)cout << "---> LogLikelihood Ratio Computation of test segment ["<<featureFileName<<"]"<< endl;	
+			
+			TabClientLine tabClientLine(ms,config);      	                         // Load if needed the client models	
+			tabClientLine.loadLine(linep);
+			
+			
+			///IL FAUT SHIFTER LES MODELES CLIENT ICI
+			//for (unsigned int i=0; i<tabClientLine.nbClientLine();i++){		// for each client of the current line
+			//	//shift the model by adding UX from the test segment
+			//cerr<<"SHIFT THE speaker "<<i<<endl;
+			//	for(unsigned long k=0; k<jfaAcc.getNDistrib(); k++){
+			//		for(unsigned long j=0; j<jfaAcc.getVectSize(); j++){
+			//			double sh = ux[i*jfaAcc.getVectSize() + j]  + tabClientLine.getClientModel(i).getDistrib(k).getMean(j) ;
+			//			
+			//			tabClientLine.getClientModel(i).getDistrib(k).setMean(sh,j);
+			//		}
+			//	}
+			//}
+			///FIN TEST
+			
+			SegServer segmentsServer;                                                   
+			LabelServer labelServer;   
+			initializeClusters(featureFileName,segmentsServer,labelServer,config);    
+			verifyClusterFile(segmentsServer,fs,config); 
+			long codeSelectedFrame=labelServer.getLabelIndexByString(labelSelectedFrames);  
+			SegCluster& selectedSegments=segmentsServer.getCluster(codeSelectedFrame); 
+			
+			MixtureGDStat &worldAcc=ss.createAndStoreMixtureGDStat(world);
+			//MixtureGDStat &tmpWorldAcc=ss.createAndStoreMixtureGDStat(tmpWorld);
+			
+			
+			worldAcc.resetLLK();                                                               					// Reset the world LLK accumulator
+			//tmpWorldAcc.resetLLK();
+			
+			RefVector <MixtureGDStat> clientAcc(tabClientLine.nbClientLine());
+			for (unsigned int i=0; i<tabClientLine.nbClientLine();i++) {
+				clientAcc.addObject(ss.createAndStoreMixtureGDStat(tabClientLine.getClientModel(i)));
+				clientAcc[i].resetLLK();                                                           				// Reset client i LLK accumulator
+			}
+			
+			Seg* seg;                                                                         					// reset the reader at the begin of the input stream
+			selectedSegments.rewind();      
+			while((seg=selectedSegments.getSeg())!=NULL){                                      		// For each of the selected segments
+				unsigned long idxBeginFrame=seg->begin()+fs.getFirstFeatureIndexOfASource(seg->sourceName()); 
+				fs.seekFeature(idxBeginFrame); 
+				Feature f;
+				for (unsigned long idxFrame=0;idxFrame<seg->length();idxFrame++){               // For each frame of the segment
+					double llkw;
+					double llkc;
+					fs.readFeature(f);
+					if ((idxFrame%worldDecime)==0)                                                					// We want to compute the world LLK and the top gaussian
+						llkw=worldAcc.computeAndAccumulateLLK(f,1.0,DETERMINE_TOP_DISTRIBS);    	// Determine the top components and compute wrld LLK
+					//llkw=tmpWorldAcc.computeAndAccumulateLLK(f,1.0,DETERMINE_TOP_DISTRIBS);
+					else{ 
+						worldAcc.computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);       			// Determine the top components and compute wrld LLK
+						//tmpWorldAcc.computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);
+					}
+					for (unsigned long i=0;i<tabClientLine.nbClientLine();i++){                             		// For each client, compute LLK using the winning
+						llkc=clientAcc[i].computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);
+					}
+				}  
+			}
+			
+			double LLKWorld=worldAcc.getMeanLLK();                                                 		// Take the world LLK
+			//double LLKWorld=tmpWorldAcc.getMeanLLK(); 
+			for (unsigned int i=0;i < tabClientLine.nbClientLine();i++){                             	// For each client
+				double LLKClient=clientAcc[i].getMeanLLK();            // Get the mean LLK 		  
+				double LLRClient=LLKClient-LLKWorld;                                          // Compute the LLR
+				char decision=setDecision(LLRClient,decisionThreshold);                       // take a decision 
+				outputResultLine(LLRClient, tabClientLine.getClientName(i),featureFileName ,gender ,decision,outNist);
+				if (verboseLevel>0) {
+					outputResultLine(LLRClient, tabClientLine.getClientName(i),featureFileName ,gender ,decision,cout); 
+					if (verboseLevel>0) cout<<"** Client LLK:"<<LLKClient<<" UBM LLk:"<<LLKWorld<<endl;
+				}
+			}  
+			clientAcc.deleteAllObjects();
+			
+			if (verboseLevel > 2) cout << "To be deleted" <<  ms.toString() << endl;	  
+			if ((nbMaxMixtureInMemory>0)&&(ms.getMixtureCount()>nbMaxMixtureInMemory)){
+				if (verboseLevel >1) cout <<"Cleaning the mixture server from 1 to "<<ms.getMixtureCount()<<endl;
+				ms.deleteMixtures(1,ms.getMixtureCount());  
+				ms.deleteUnusedDistribs();
+				if (verboseLevel > 2) cout << "deleted" <<  ms.toString() << endl;	  	
+			}
+			
+			
+			
+			
+		}         	// end of the NDX line loop
+		outNist.close(); 
+		
+	}// fin try
+	catch (Exception& e){ 
+		cout << e.toString().c_str() << endl;
+	}
+	return 0;
+}
+
+//-------------------------------------------------------------------------------------------------------
+//	Compute Test using classical GMM in the LFA framework
+//-------------------------------------------------------------------------------------------------------
+int ComputeTestLFA(Config& config){
+	
+	String inputNDXFileName = config.getParam("ndxFilename");                        			// NDX inputfile filename - described the experience 
+	String inputWorldFilename = config.getParam("inputWorldFilename");                   		// World model file used for the LLR computation
+	String outputNISTFileName = config.getParam("outputFilename");                    	   	// Result file in NIST style (.nist) result file format
+	String labelSelectedFrames =config.getParam("labelSelectedFrames");            	  		// label for selected frames - Only the frames from segments 
+	// with this label  will be used
+	
+	String gender=config.getParam("gender");                                         				// gives the gender for compatibility reasons with NIST standard output file
+	real_t decisionThreshold;
+	if (config.existsParam("decisionThreshold"))                                     				// Define the threshold if needed
+		decisionThreshold=config.getParam("decisionthreshold").toDouble();
+	else decisionThreshold=0;
+	unsigned long maxClientLine=CST_MAX_CLIENT_LINE;                                 		// Max of target Id for a ndx line
+	if (config.existsParam("maxTargetLine")) maxClientLine=config.getParam("maxTargetLine").toLong();
+	unsigned long nbMaxMixtureInMemory=1; 								//delete models
+	if (config.existsParam("nbMaxMixtureInMemory")) nbMaxMixtureInMemory=config.getParam("nbMaxMixtureInMemory").toLong();
+	unsigned long worldDecime=1;
+	if (config.existsParam("worldDecime")) 
+		worldDecime=config.getParam("worldDecime").toLong(); 
+	if (config.getParam_debug())debug=true;  else debug=false;
+	if (verbose){
+		cout << "Compute Test, Decime mode["<<worldDecime<<"] ";
+		cout << "File Mode- 1 LLR by file" <<endl;
+	}
+	
+	try{   
+		
+		XList ndx(inputNDXFileName,config);                                    						// Read the test definition file (ndx)
+		XLine *linep;                                                          								// Pointor on the current test line
+		ndx.getLine(0);
+		MixtureServer ms(config);
+		StatServer ss(config, ms);
+		MixtureGD& world = ms.loadMixtureGD(inputWorldFilename);               				// Load the world model
+		ofstream outNist(outputNISTFileName.c_str(),ios::out | ios::trunc);    				// Initialise the output file
+		
+		//Load JFA MAtrices
+		unsigned long svsize=world.getVectSize()*world.getDistribCount();
+		Matrix<double> U, V; 
+		DoubleVector D(svsize,svsize);
+		
+		
+		//Initialise EC matrix
+		if(config.existsParam("eigenChannelMatrix")){
+			String uName = config.getParam("matrixFilesPath") + config.getParam("eigenChannelMatrix") + config.getParam("loadMatrixFilesExtension");
+			U.load (uName, config);
+		}
+		else{
+			U.setDimensions(1,world.getVectSize());
+			U.setAllValues(0.0);
+		}
+		
+		//Initialise EV matrix
+		if(config.existsParam("eigenVoiceMatrix")){
+			String vName = config.getParam("matrixFilesPath") + config.getParam("eigenVoiceMatrix") + config.getParam("loadMatrixFilesExtension");
+			V.load (vName, config);
+		}
+		else{
+			V.setDimensions(1,world.getVectSize());
+			V.setAllValues(0.0);
+		}
+		
+		//Initialise D matrix
+		for(unsigned long i=0; i<world.getDistribCount(); i++){
+			for(unsigned long j = 0; j<world.getVectSize(); j++){
+				D[i*world.getVectSize()+j] = sqrt(1.0/(world.getDistrib(i).getCovInv(j)*config.getParam("regulationFactor").toDouble()));
+			}
+		}
+		
+		//Test Loop
+		while ((linep=ndx.getLine()) != NULL){
+			
+			String &featureFileName=linep->getElement(0);                        				//get the testfile basename
+			XLine featureFileListp;
+			
+			featureFileListp.addElement(linep->getElement(0));							//read the name of the test segment file
+			
+			XList ndx; ndx.addLine() = featureFileListp;
+			
+			JFAAcc jfaAcc(ndx,config);
+			
+			if(verboseLevel >= 1) cout<<"Compute Likelihood ratio of test segment [ "<<featureFileName<<" ]"<<endl;
+			
+			///Load existing JFA matrices
+			jfaAcc.loadEV(V, config); jfaAcc.loadEC(U, config); jfaAcc.loadD(D); 
+			
+			///Compute JFA stats
+			jfaAcc.computeAndAccumulateJFAStat(config);
+			
+			jfaAcc.substractMplusDZByChannel();
+			jfaAcc.substractMplusUX();
+			
+			///Estimate uEuT for the test
+			jfaAcc.estimateUEUT(config);
+			
+			///Estimate and inverse L matrices
+			jfaAcc.estimateAndInverseL_EC(config);
+			
+			///Estimate X for the test segment
+			jfaAcc.estimateX(config);
+			
+			jfaAcc.estimateZMAP(config.getParam("regulationFactor").toLong());
+			
+			FeatureServer fs(config,featureFileName);
+			
+			///Estimate XYZ on the test segment and normalise the features by substracting Ux
+			jfaAcc.substractUXfromFeatures(fs,config);
+			
+			//***************************
+			//AJOUT LFA, a tester ou mettre en option ???
+			//***************************
+			if(config.getParam("cms").toBool()){
+				cms(featureFileName,fs,config);
+			}
+			//***************************
+			
+			TabClientLine tabClientLine(ms,config);      	                         // Load if needed the client models	
+			tabClientLine.loadLine(linep);
+			
+			SegServer segmentsServer;                                                   
+			LabelServer labelServer;   
+			initializeClusters(featureFileName,segmentsServer,labelServer,config);    
+			verifyClusterFile(segmentsServer,fs,config); 
+			long codeSelectedFrame=labelServer.getLabelIndexByString(labelSelectedFrames);  
+			SegCluster& selectedSegments=segmentsServer.getCluster(codeSelectedFrame); 
+			
+			MixtureGDStat &worldAcc=ss.createAndStoreMixtureGDStat(world);
+			worldAcc.resetLLK(); 
+			
+			
+			RefVector <MixtureGDStat> clientAcc(tabClientLine.nbClientLine());
+			for (unsigned int i=0; i<tabClientLine.nbClientLine();i++) {
+				clientAcc.addObject(ss.createAndStoreMixtureGDStat(tabClientLine.getClientModel(i)));
+				clientAcc[i].resetLLK();                                                           				// Reset client i LLK accumulator
+			}
+			
+			Seg* seg;                                                                         					// reset the reader at the begin of the input stream
+			selectedSegments.rewind();      
+			while((seg=selectedSegments.getSeg())!=NULL){                                      		// For each of the selected segments
+				unsigned long idxBeginFrame=seg->begin()+fs.getFirstFeatureIndexOfASource(seg->sourceName()); 
+				fs.seekFeature(idxBeginFrame); 
+				Feature f;
+				for (unsigned long idxFrame=0;idxFrame<seg->length();idxFrame++){               // For each frame of the segment
+					double llkw;
+					double llkc;
+					fs.readFeature(f);
+					if ((idxFrame%worldDecime)==0)                                                					// We want to compute the world LLK and the top gaussian
+						llkw=worldAcc.computeAndAccumulateLLK(f,1.0,DETERMINE_TOP_DISTRIBS);    	// Determine the top components and compute wrld LLK
+					
+					else{ 
+						worldAcc.computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);       			// Determine the top components and compute wrld LLK
+					}
+					for (unsigned long i=0;i<tabClientLine.nbClientLine();i++){                             		// For each client, compute LLK using the winning
+						llkc=clientAcc[i].computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);
+					}
+				}  
+			}
+			
+			double LLKWorld=worldAcc.getMeanLLK();                                              // Take the world LLK
+			
+			for (unsigned int i=0;i < tabClientLine.nbClientLine();i++){						// For each client
+				double LLKClient=clientAcc[i].getMeanLLK();										// Get the mean LLK 		  
+				double LLRClient=LLKClient-LLKWorld;												// Compute the LLR
+				char decision=setDecision(LLRClient,decisionThreshold);							// take a decision 
+				outputResultLine(LLRClient, tabClientLine.getClientName(i),featureFileName ,gender ,decision,outNist);
+				if (verboseLevel>0) {
+					outputResultLine(LLRClient, tabClientLine.getClientName(i),featureFileName ,gender ,decision,cout); 
+					if (verboseLevel>0) cout<<"** Client LLK:"<<LLKClient<<" UBM LLk:"<<LLKWorld<<endl;
+				}
+			}  
+			clientAcc.deleteAllObjects();
+			
+			if (verboseLevel > 2) cout << "To be deleted" <<  ms.toString() << endl;	  
+			if ((nbMaxMixtureInMemory>0)&&(ms.getMixtureCount()>nbMaxMixtureInMemory)){
+				if (verboseLevel >1) cout <<"Cleaning the mixture server from 1 to "<<ms.getMixtureCount()<<endl;
+				ms.deleteMixtures(1,ms.getMixtureCount());  
+				ms.deleteUnusedDistribs();
+				if (verboseLevel > 2) cout << "deleted" <<  ms.toString() << endl;	  	
+			}
+		}         	// end of the NDX line loop
+		outNist.close(); 
+		
+	}// fin try
+	catch (Exception& e){ 
+		cout << e.toString().c_str() << endl;
+	}
+	return 0;
 }
 
 int ComputeTestFA(Config& config)
@@ -443,6 +1021,7 @@ int ComputeTestFA(Config& config)
 	  }  
 	}  
 
+	clientAcc.deleteAllObjects();
 	
         if (verboseLevel > 2) cout << "To be deleted" <<  ms.toString() << endl;	  
         if ((nbMaxMixtureInMemory>0)&&(ms.getMixtureCount()>nbMaxMixtureInMemory)){
