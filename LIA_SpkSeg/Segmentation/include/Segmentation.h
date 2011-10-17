@@ -52,74 +52,33 @@ LIA_RAL admin [alize@univ-avignon.fr]
 Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 */
 
-#if !defined(ALIZE_Hmm_h)
-#define ALIZE_Hmm_h
+/**
+ * \file Segmentation.h
+ * \author LIA
+ * \version 2.0
+ * \date june 2011
+ *
+ * \brief Declaration of speaker segmentation functions
+ *
+**/
 
-#if defined(_WIN32)
-#if defined(LIA_SPKTOOLS_EXPORTS)
-#define LIA_SPKTOOLS_API __declspec(dllexport)
-#else
-#define LIA_SPKTOOLS_API __declspec(dllimport)
-#endif
-#else
-#define LIA_SPKTOOLS_API
-#endif
+#if !defined(ALIZE_Segmentation_h)
+#define ALIZE_Segmentation_h
 
 #include <alize.h>
-
 
 using namespace alize;
 using namespace std;
 
-class LIA_SPKTOOLS_API hmm{
-	MixtureServer *ms;
-	Config *conf;
-	ObjectRefVector tabState;
-	XLine tabStateName;
-	DoubleVector transitions;
-	ULongVector	length;	
-	ULongVector	replacement;	
-	
-	public:
-	unsigned long getNbState();
-	unsigned long getStateIndex(String);
-	unsigned long LoadState(String);
-	unsigned long LoadState(String,String);
-	unsigned long LoadState(Mixture&,String);	
-	unsigned long LoadState(MixtureGD&,String);	
-	unsigned long LoadState(Mixture&,String,unsigned long);	
-	unsigned long LoadState(Mixture&,String,unsigned long, unsigned long);	
-	unsigned long LoadState(MixtureGD&,String,unsigned long);	
-	unsigned long LoadState(MixtureGD&,String,unsigned long, unsigned long);	
-	unsigned long addState(String);
-	unsigned long deleteState(unsigned long indice);
-	double getTransition(int i,int j);
-	void getTransition(DoubleVector &);
-	void setTransition(double,int , int );
-	void reset();
-	const hmm& operator=(const hmm& hmmc);
-	Mixture& getDensity(unsigned long);
-	void setDensity(Mixture& m, unsigned long nModel);
-	void setDensity(MixtureGD& m, unsigned long nModel);
-	void setDensity(String, unsigned long);
-	const String &getStateName(unsigned long);
-	void setStateName(unsigned long, String);
-	void setLength(unsigned long, unsigned long);
-	void setReplacement(unsigned long, unsigned long);
-	unsigned long getLength(unsigned long);
-	unsigned long getLength(String);
-	unsigned long getReplacement(unsigned long);
-	unsigned long getReplacement(String);
-	hmm(MixtureServer &, Config &);
-	hmm(const hmm&);
-	~hmm();
-	
-	private:
-	void assign(const hmm& hmmc);
-	void save();
-	void load();
-};
+#include <alize.h>
+#include "Tools.h"
 
-// Return a copy of the transition matrix - should be included into hmm class - TODO
-//DoubleVector &copyTransition(hmm& cHmm);
-#endif
+bool segmentSelection(Config &, SegCluster &, SegCluster &, unsigned long &, unsigned long &, String &);
+int  addSpeaker(Config &, SegServer &, SegServer &, LabelServer &, int &, hmm &, String);
+bool isValidSpeaker(Config &, hmm &, hmm &, SegServer &, SegServer &, SegServer &, unsigned long);
+bool isSegAvailable(Config &, SegServer &, SegServer &);
+bool isStopCriterionReached(Config &, hmm &, hmm &, SegServer &, SegServer &, SegServer &, StatServer &, FeatureServer &, unsigned long);
+void segmentationProcess(Config &, SegCluster &, SegServer &, StatServer &, FeatureServer &, MixtureServer &, LabelServer &);
+void launchSegmentationProcess(Config &);
+
+#endif // !defined(ALIZE_Segmentation_h)
