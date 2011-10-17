@@ -69,22 +69,37 @@ unsigned long hmm::getNbState(){
 	 return (tabState.size());
 }
 
-	// --------------------------------------------------------------------------------
-void hmm::setDensity(String fileName, unsigned long nModel)
-{
-	 tabState.setObject(ms->loadMixtureGD(fileName),nModel);
+unsigned long hmm::getStateIndex(String name){
+	return tabStateName.getIndex(name);
 }
 
 	// --------------------------------------------------------------------------------
-MixtureGD& hmm::getDensity(unsigned long nModel)
+void hmm::setDensity(String fileName, unsigned long nModel)
 {
-	 return (static_cast<MixtureGD&>(tabState.getObject(nModel)));
+	 tabState.setObject(ms->loadMixture(fileName),nModel);
+}
+
+	// --------------------------------------------------------------------------------
+Mixture& hmm::getDensity(unsigned long nModel)
+{
+	 return (static_cast<Mixture&>(tabState.getObject(nModel)));
+}
+
+	// --------------------------------------------------------------------------------
+void hmm::setDensity(Mixture& m, unsigned long nModel)
+{
+	// A MODIFIER POUR DETRUIRE SI NECESSAIRE LA MIXTURE CREE AUPARAVANT !
+	unsigned long temp;
+
+	temp=ms->getMixtureIndex(static_cast<Mixture&>(tabState.getObject(nModel)).getId());
+	ms->deleteMixtures(temp,temp);
+	ms->deleteUnusedDistribs();
+ 	tabState.setObject(ms->duplicateMixture(m,DUPL_DISTRIB),nModel);
 }
 
 	// --------------------------------------------------------------------------------
 void hmm::setDensity(MixtureGD& m, unsigned long nModel)
 {
-	// A MODIFIER POUR DETRUIRE SI NECESSAIRE LA MIXTURE CREE AUPARAVANT !
 	unsigned long temp;
 
 	temp=ms->getMixtureIndex(static_cast<MixtureGD&>(tabState.getObject(nModel)).getId());
@@ -92,7 +107,6 @@ void hmm::setDensity(MixtureGD& m, unsigned long nModel)
 	ms->deleteUnusedDistribs();
  	tabState.setObject(ms->duplicateMixture(m,DUPL_DISTRIB),nModel);
 }
-
 
 //-------------------------------------------------------------------------------
 const String &hmm::getStateName(unsigned long nModel){
@@ -107,23 +121,32 @@ void hmm::setStateName(unsigned long nModel, String s){
 //--------------------------------------------------------------------------
 unsigned long hmm::LoadState(String fileName)
 {
-tabState.addObject(ms->loadMixtureGD(fileName));
+tabState.addObject(ms->loadMixture(fileName));
 tabStateName.addElement(fileName);		
 transitions.setSize(tabState.size()*tabState.size());
-
 return (tabState.size());
 }
 
 //--------------------------------------------------------------------------
 unsigned long hmm::LoadState(String fileName,String name)
 {
-tabState.addObject(ms->loadMixtureGD(fileName));
+tabState.addObject(ms->loadMixture(fileName));
 tabStateName.addElement(name);		
 transitions.setSize(tabState.size()*tabState.size());
 
 return (tabState.size());
 }
 
+
+//--------------------------------------------------------------------------
+unsigned long hmm::LoadState(Mixture& m,String name)
+{
+tabState.addObject(ms->duplicateMixture(m,DUPL_DISTRIB));
+tabStateName.addElement(name);		
+transitions.setSize(tabState.size()*tabState.size());
+
+return (tabState.size());
+}
 
 //--------------------------------------------------------------------------
 unsigned long hmm::LoadState(MixtureGD& m,String name)
@@ -136,9 +159,56 @@ return (tabState.size());
 }
 
 //--------------------------------------------------------------------------
+unsigned long hmm::LoadState(Mixture& m,String name, unsigned long l)
+{
+tabState.addObject(ms->duplicateMixture(m,DUPL_DISTRIB));
+tabStateName.addElement(name);		
+transitions.setSize(tabState.size()*tabState.size());
+length.addValue(l);
+
+return (tabState.size());
+}
+
+//--------------------------------------------------------------------------
+unsigned long hmm::LoadState(MixtureGD& m,String name, unsigned long l)
+{
+tabState.addObject(ms->duplicateMixture(m,DUPL_DISTRIB));
+tabStateName.addElement(name);		
+transitions.setSize(tabState.size()*tabState.size());
+length.addValue(l);
+
+return (tabState.size());
+}
+
+
+//--------------------------------------------------------------------------
+unsigned long hmm::LoadState(Mixture& m,String name, unsigned long l, unsigned long r)
+{
+tabState.addObject(ms->duplicateMixture(m,DUPL_DISTRIB));
+tabStateName.addElement(name);		
+transitions.setSize(tabState.size()*tabState.size());
+length.addValue(l);
+replacement.addValue(r);
+
+return (tabState.size());
+}
+
+//--------------------------------------------------------------------------
+unsigned long hmm::LoadState(MixtureGD& m,String name, unsigned long l, unsigned long r)
+{
+tabState.addObject(ms->duplicateMixture(m,DUPL_DISTRIB));
+tabStateName.addElement(name);		
+transitions.setSize(tabState.size()*tabState.size());
+length.addValue(l);
+replacement.addValue(r);
+
+return (tabState.size());
+}
+
+//--------------------------------------------------------------------------
 unsigned long hmm::addState(String nameState)
 {
-tabState.addObject(ms->createMixtureGD());
+tabState.addObject(ms->createMixture());
 tabStateName.addElement(nameState);		
 transitions.setSize(tabState.size()*tabState.size());
 
@@ -164,11 +234,49 @@ void hmm::setTransition(double a,int i,int j){
   transitions[i+j*tabState.size()]=a;
 }
 
+//-----------------------------------------------------------------------------------
+unsigned long hmm::getLength(unsigned long i){
+
+return length[i];
+}
+
+//-----------------------------------------------------------------------------------
+unsigned long hmm::getLength(String name){
+
+return length[getStateIndex(name)];
+}
+
+//-----------------------------------------------------------------------------------
+unsigned long hmm::getReplacement(String name){
+
+return replacement[getStateIndex(name)];
+}
+
+//-----------------------------------------------------------------------------------
+unsigned long hmm::getReplacement(unsigned long i){
+
+return replacement[i];
+}
+
+
+
+//-----------------------------------------------------------------------------------
+void hmm::setLength(unsigned long i, unsigned long l){
+
+length[i]=l;
+}
+
+//-----------------------------------------------------------------------------------
+void hmm::setReplacement(unsigned long i, unsigned long r){
+
+replacement[i]=r;
+}
+
 //--------------------------------------------------------------------------------------
 void hmm::reset(void){
   unsigned long temp;
   for(unsigned long i=0;i<tabState.size();i++){
-    temp=ms->getMixtureIndex(static_cast<MixtureGD&>(tabState.getObject(i)).getId());
+    temp=ms->getMixtureIndex(static_cast<Mixture&>(tabState.getObject(i)).getId());
     ms->deleteMixtures(temp,temp);
   }
   ms->deleteUnusedDistribs();
@@ -179,12 +287,14 @@ void hmm::reset(void){
 //----------------------------------------------------------------------------------
 unsigned long hmm::deleteState(unsigned long indice){
   unsigned long temp;
-  temp=ms->getMixtureIndex(static_cast<MixtureGD&>(tabState.getObject(indice)).getId()); // TODO, change for the mixture delete function
+  temp=ms->getMixtureIndex(static_cast<Mixture&>(tabState.getObject(indice)).getId()); // TODO, change for the mixture delete function
   ms->deleteMixtures(temp,temp);
   ms->deleteUnusedDistribs();
   tabState.removeObjects(indice,indice);
   tabStateName.deleteElement(tabStateName.getElement(indice));
   transitions.setSize(tabState.size()*tabState.size());
+  if(length.size() != 0)
+  	length.removeValues(indice, indice);
   return temp; // TODO VERIFY THE RETURN VALUE - JFB
 }
 
@@ -209,7 +319,7 @@ void hmm::assign(const hmm& hmmc){
   //copie des données
   transitions=hmmc.transitions;
   for(unsigned long i=0;i<hmmc.tabState.size();i++) {
-    tabState.addObject(ms->duplicateMixtureGD(static_cast<MixtureGD&>( hmmc.tabState.getObject(i)),DUPL_DISTRIB));
+    tabState.addObject(ms->duplicateMixture(static_cast<Mixture&>( hmmc.tabState.getObject(i)),DUPL_DISTRIB));
   }
 }
 

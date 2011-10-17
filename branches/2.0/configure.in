@@ -2,8 +2,6 @@ AC_INIT([LIA_RAL], [2.0], [dev-alize@listes.univ-avignon.fr])
 AM_INIT_AUTOMAKE(LIA_RAL,2.0)
 
 ALIZE_PATH=/Users/christophe_levy/Documents/src/ALIZE_2.0/
-ALIZE_PATH=/mnt/hgfs/MacOSX/Users/christophe_levy/Documents/src//ALIZE_2.0/
-#ALIZE_PATH=/cygdrive/c/Users/Christophe/Desktop/ALIZE_2.0/
                     
 # Checks for programs.
 AC_PROG_CXX
@@ -134,4 +132,13 @@ AC_OUTPUT([LIA_SpkTools/Makefile
                  LIA_Utils/TimeCluster/src/Makefile
                  LIA_Utils/modelToSv/Makefile
                  LIA_Utils/modelToSv/src/Makefile
+                 LIA_SpkSeg/Makefile
+                 LIA_SpkSeg/AcousticSegmentation/Makefile
+                 LIA_SpkSeg/AcousticSegmentation/src/Makefile
+                 LIA_SpkSeg/ReSegmentation/Makefile
+                 LIA_SpkSeg/ReSegmentation/src/Makefile
+                 LIA_SpkSeg/Segmentation/Makefile
+                 LIA_SpkSeg/Segmentation/src/Makefile
+                 LIA_SpkSeg/TurnDetection/Makefile
+                 LIA_SpkSeg/TurnDetection/src/Makefile
                  Makefile])

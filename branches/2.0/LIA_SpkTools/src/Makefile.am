@@ -15,6 +15,7 @@ libliatools_a_SOURCES= \
 	ScoreWarp.cpp\
 	SuperVectors.cpp\
 	TrainTools.cpp\
+	Tools.cpp\
 	liatools.cpp
 
 AM_CPPFLAGS=-I../include -I$(ALIZE_PATH)/include

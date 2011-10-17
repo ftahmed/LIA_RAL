@@ -67,8 +67,6 @@ using namespace std;
 
 /**********************************************************
 * clrCrit: Application of CLR criterion for clustering
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double clrCrit(Config& config, SegCluster& c1, SegCluster &c2, StatServer& ss, FeatureServer& fs, MixtureGD& m1, MixtureGD& m2, MixtureGD& world){
 
@@ -102,8 +100,6 @@ return clr;
 
 /**********************************************************
 * glrCrit: Application of GLR criterion for clustering
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double gllrCrit(Config& config, SegCluster& c1, SegCluster &c2, SegCluster &c12, StatServer& ss, FeatureServer& fs, MixtureGD& m1, MixtureGD& m2, MixtureGD& m12){
 
@@ -130,8 +126,6 @@ return gllr;
 
 /**********************************************************
 * bicCrit: Application of BIC criterion for clustering
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double bicCrit(Config& config, SegCluster& c1, SegCluster &c2, SegCluster &c12, StatServer& ss, FeatureServer& fs, MixtureGD& m1, MixtureGD& m2, MixtureGD& m12){
 
@@ -146,8 +140,6 @@ return bic;
 
 /**********************************************************
 * bicCrit: Application of Delta BIC criterion for clustering (IDIAP)
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double deltabicCrit(Config& config, SegCluster& c1, SegCluster &c2, SegCluster &c12, StatServer& ss, FeatureServer& fs, MixtureGD& m1, MixtureGD& m2, MixtureGD& m12){
 
@@ -159,8 +151,6 @@ return deltabic;
 
 /**********************************************************
 * clusteringCriterionByAdapt: Application of different criterion for clustering (models are trained by adaptation)
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double clusteringCriterionByAdapt(Config& config, Seg *segment1, Seg *segment2, StatServer& ss, FeatureServer& fs, MixtureGD& world, String crit){
 
@@ -218,8 +208,6 @@ return -1;
 
 /**********************************************************
 * clusteringCriterion: Application of different criterion for clustering (models are trained by EM/ML - Initialization by external model)
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double clusteringCriterion(Config& config, Seg *segment1, Seg *segment2, StatServer& ss, FeatureServer& fs, MixtureGD& world, String crit){
 
@@ -292,8 +280,6 @@ return -1;
 
 /**********************************************************
 * mergeCluster: merge two clusters
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 SegCluster& mergeCluster(SegCluster& c1, SegCluster& c2, SegServer& segTemp, String merge="NULL"){
 
@@ -313,8 +299,6 @@ return c12;
 
 /**********************************************************
 * clusteringCriterionWithoutWorldInit: Application of different criterion for clustering (models are trained by EM/ML - Initialization by external model)
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double clusteringCriterionWithoutWorldInit(Config& config, SegCluster& c1, SegCluster& c2, StatServer& ss, 
 		FeatureServer& fs,MixtureGD& world,String crit){
@@ -470,8 +454,6 @@ return -1;
 
 /**********************************************************
 * clusteringCriterionWithoutWorldInit: Application of different criterion for clustering (models are trained by EM/ML - Initialization by external model)
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double clusteringCriterionWithoutWorldInit(Config& config, SegCluster& c1, MixtureGD& m1, SegCluster& c2, MixtureGD& m2, StatServer& ss, 
 		FeatureServer& fs,MixtureGD& world,String crit){
@@ -557,8 +539,6 @@ return -1;
 
 /**********************************************************
 * clusteringCriterion: Application of different criterion for clustering (models are trained by EM/ML - Initialization by external model)
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double clusteringCriterionWithoutWorldInit(Config& config, Seg *segment1, Seg *segment2, StatServer& ss, FeatureServer& fs,MixtureGD& world,String crit){
 
@@ -580,8 +560,6 @@ return clusteringCriterionWithoutWorldInit(config, c1, c2, ss, fs,world,crit);
 
 /**********************************************************
 * isSimilarSegment: compare two segments with BIC, GLR, ..., criterions
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 bool isSimilarSegment(Config& config, Seg *segment1, Seg *segment2, StatServer& ss, FeatureServer& fs, MixtureGD& world, String crit){
 	// if deltabic positive => two segments are similar
@@ -605,8 +583,6 @@ return false; // avoid warning NS (check that!)
 
 /**********************************************************
 * cohortMaxLikelihood: compute the maximum likelihood over a set of cluster for a given segment
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 double cohortMaxLikelihood(StatServer& ss,FeatureServer &fs,hmm& actualHMM,unsigned long except,unsigned long begin,unsigned long longSelection,Config& config){
 DoubleVector llr;
@@ -614,7 +590,7 @@ DoubleVector llr;
 cout << "nb: " << actualHMM.getNbState() << endl;
 for(unsigned long i=0; i<actualHMM.getNbState(); i++){	
 	if(i!=except){
-		MixtureGD& m=actualHMM.getDensity(i);
+		MixtureGD& m=(MixtureGD&)actualHMM.getDensity(i);
 		double mean = meanLikelihood(ss,fs,m,begin,longSelection,config);
 		cout << "mean: " << mean << endl;
 		llr.addValue(mean);	
@@ -629,8 +605,6 @@ return max;
 
 /**********************************************************
 * bestFittingSegment: search the best segments of a cluster (in terms of likelihood) and return it
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 Seg *bestFittingSegment(Config& config, SegCluster& cluster, MixtureGD& m, StatServer& ss, FeatureServer& fs){
 
@@ -672,8 +646,6 @@ return segment;
 
 /**********************************************************
 * bestFittingSegment: search the best segments of a cluster (in terms of likelihood) and return it
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 Seg *bestFittingSegment(Config& config, SegCluster& cluster, MixtureGD& m, StatServer& ss, FeatureServer& fs, MixtureGD& world){
 
@@ -718,8 +690,6 @@ return segment;
 
 /**********************************************************
 * bestFittingSegment: search the best segments of a cluster (in terms of likelihood) and return it
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 Seg *bestFittingSegment(Config& config, SegCluster& cluster, MixtureGD& m, StatServer& ss, FeatureServer& fs, hmm& actualHMM,unsigned long except){
 
@@ -765,8 +735,6 @@ return segment;
 
 /**********************************************************
 * bestFittingCLuster: search the best cluster for a segment (in terms of normalized likelihood) and return it
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 unsigned long bestFittingCluster(Config& config, hmm& actualHMM, SegServer& actualSeg, Seg *segment, StatServer& ss, FeatureServer& fs, unsigned long exceptInd=200){
 
@@ -774,7 +742,7 @@ DoubleVector llr,allInd;                                        // The LLR value
 
 for(unsigned long icluster=0; icluster<actualSeg.getClusterCount(); icluster++){
 	if(icluster != exceptInd){
-		MixtureGD& m=actualHMM.getDensity(icluster);
+		MixtureGD& m=(MixtureGD&)actualHMM.getDensity(icluster);
 		double llrTmp = meanLikelihood(ss,fs,m,segment->begin(),segment->length(),config);
 		if(verbose) cout << "meanLikelihood of cluster: " << icluster << " => " << llrTmp << endl;
 		llr.addValue(llrTmp);
@@ -789,15 +757,13 @@ return ind;
 
 /**********************************************************
 * intraCluster: evaluate purity intra cluster
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 void intraCluster(Config& config, hmm& actualHMM, SegServer& actualSeg, StatServer& ss, FeatureServer& fs, MixtureGD& world, String crit){
 	for(unsigned long icluster=0;icluster<actualSeg.getClusterCount();icluster++){ // For each cluster
 		SegCluster& clusterA=actualSeg.getCluster(icluster);         // Get the current cluster of segments 
 		if (verbose) cout<<" Purify cluster for speaker "<<clusterA.string()<<endl;
 		clusterA.rewind();
-		Seg *segment1 = bestFittingSegment(config, clusterA, actualHMM.getDensity(icluster), ss, fs,world);
+		Seg *segment1 = bestFittingSegment(config, clusterA, (MixtureGD&)actualHMM.getDensity(icluster), ss, fs,world);
 		if ((verbose) && (verboseLevel == 2)) cout<<"Best segment "<<segment1->begin()<< " " << endSeg(segment1) << endl;
 		Seg *segment2;	
 		while((segment2=clusterA.getSeg())!=NULL)                               // Loop on each segment comming from the macro-class acoustic segmentation
@@ -808,8 +774,6 @@ void intraCluster(Config& config, hmm& actualHMM, SegServer& actualSeg, StatServ
 
 /**********************************************************
 * interCluster: Evaluate purity inter cluster
-* 
-* Author C. Fredouille February 2006
 ***********************************************************/
 void interCluster(Config& config, hmm& actualHMM, SegServer& actualSeg, StatServer& ss, FeatureServer& fs, MixtureGD& world, String crit){
 
@@ -819,7 +783,7 @@ void interCluster(Config& config, hmm& actualHMM, SegServer& actualSeg, StatServ
 		if (verbose) cout<<" Evaluation of purity inter cluster for speaker "<<clusterA.string()<<endl;
 		clusterA.rewind();
 
-		Seg *segment1 = bestFittingSegment(config, clusterA, actualHMM.getDensity(icluster), ss, fs,world);
+		Seg *segment1 = bestFittingSegment(config, clusterA, (MixtureGD&)actualHMM.getDensity(icluster), ss, fs,world);
 		if ((verbose) && (verboseLevel == 2)) cout<<"Best segment "<<segment1->begin()<< " " << endSeg(segment1) << endl;
 		Seg *segment2;	
 		
@@ -834,4 +798,130 @@ void interCluster(Config& config, hmm& actualHMM, SegServer& actualSeg, StatServ
 			}//if other
 		}
 	}//for icluster
+}
+
+
+/**********************************************************
+* InitOneGausMixture: Create a mixture with only one Gaussian and initialized to the global covariance and mean
+***********************************************************/
+MixtureGD & InitOneGausMixture(Config& config, SegCluster& c, FeatureServer& fs, MixtureServer& ms){
+
+unsigned long vectSize=fs.getVectSize();
+MixtureGD &m=ms.createMixtureGD(1);
+DistribGD &d=m.getDistrib(0);
+	
+FrameAccGD globalFrameAcc;                                                    //compute global Mean and cov
+globalMeanCov (fs,c,globalFrameAcc,config);                             // Compute the global mean and covariance
+DoubleVector globalMean=globalFrameAcc.getMeanVect(); 
+DoubleVector globalCov=globalFrameAcc.getCovVect();
+	
+for(unsigned long i=0; i<vectSize; i++){
+	d.setMean(globalMean[i], i);
+	d.setCov(globalCov[i], i);
+}
+d.computeAll();	
+	
+return m;
+}
+
+
+/**********************************************************
+* clusteringCriterionWithoutWorldInitOneGaus: Application of different criterion for clustering (models are trained by EM/ML - Initialization by external model)
+***********************************************************/
+double clusteringCriterionWithoutWorldInitOneGaus(Config& config, SegCluster& c1, SegCluster& c2, StatServer& ss, 
+		FeatureServer& fs,String crit){
+	
+double criterion=0.0;
+SegServer segTemp;
+MixtureServer ms(config); 
+
+TrainCfg trainCfg(config);
+
+unsigned long vectSize=fs.getVectSize();
+
+SegCluster& c12=mergeCluster(c1, c2, segTemp);
+
+
+if(crit == "DELTABIC"){
+
+	MixtureGD& m1=InitOneGausMixture(config, c1, fs, ms);
+	MixtureGD& m2=InitOneGausMixture(config, c2, fs, ms);
+	MixtureGD& m12=InitOneGausMixture(config, c12, fs, ms);
+
+	
+	/* Split of the unique Gaussian + 2 iterations of EM */
+        DistribGD &d12=m12.getDistrib(0);
+	DistribGD &d12Bis=ms.duplicateDistrib(d12);
+
+	for(unsigned long i=0; i<vectSize; i++){
+		/* first gaussian mean is fixed to mean(gaussian to split)+squared(cov(gaussian to split))
+		second gaussian mean is fixed to mean(gaussian to split)-squared(cov(gaussian to split)) */
+		double mean=d12.getMean(i);
+		d12.setMean(mean+sqrt(d12.getCov(i)), i);
+		d12Bis.setMean(mean-sqrt(d12.getCov(i)), i);
+	}
+	
+	m12.weight(0)=0.5;
+	ms.addDistribToMixture(m12, d12Bis, 0.5);
+	
+	trainCfg.setNbTrainIt(2);
+	for (unsigned long trainIt=0; trainIt<trainCfg.getNbTrainIt(); trainIt++){                           // Begin the initial EM iteration loop 
+		MixtureStat& emAcc=ss.createAndStoreMixtureStat(m12);             // Create a statistic accumulator using the init model
+		// Set the variance control parameters
+
+		emAcc.resetEM();                                                                                    // EM stuff
+		double llkPreviousIt=accumulateStatEM(ss,fs,emAcc,c12,config);                        // Compute EM statistics
+		m12 = emAcc.getEM();                                                                             // Get the EM estimate
+		//varianceControl(world,varianceFlooring,varianceCeiling,globalCov12);
+		ss.deleteMixtureStat(emAcc);
+	}
+
+	criterion = deltabicCrit(config, c1, c2, c12, ss, fs, m1, m2, m12);
+	ms.deleteMixture(m1);
+	ms.deleteMixture(m2);
+	ms.deleteMixture(m12);
+	ms.deleteUnusedDistribs();
+
+	return criterion;
+}
+else{
+	MixtureGD& m1=InitOneGausMixture(config, c1, fs, ms);
+	MixtureGD& m2=InitOneGausMixture(config, c2, fs, ms);
+
+	if((crit=="GLR") || (crit=="BIC") || (crit=="DGLR")){
+		MixtureGD& m12=InitOneGausMixture(config, c12, fs, ms);
+
+		if(crit=="GLR"){
+			criterion = gllrCrit(config, c1, c2, c12, ss, fs, m1, m2, m12);
+			ms.deleteMixture(m1);
+			ms.deleteMixture(m2);
+			ms.deleteMixture(m12);
+			ms.deleteUnusedDistribs();
+			return criterion;
+		}
+		if(crit=="DGLR"){
+			criterion = gllrCrit(config, c1, c2, c12, ss, fs, m1, m2, m12);
+			ms.deleteMixture(m1);
+			ms.deleteMixture(m2);
+			ms.deleteMixture(m12);
+			ms.deleteUnusedDistribs();
+			return (-1.0*criterion);
+		}
+		if(crit=="BIC"){
+			criterion = bicCrit(config, c1, c2, c12, ss, fs, m1, m2, m12);
+			ms.deleteMixture(m1);
+			ms.deleteMixture(m2);
+			ms.deleteMixture(m12);
+			ms.deleteUnusedDistribs();
+			return criterion;
+		}		
+	}
+
+	else{
+		cout << "ERROR: unknown clustering criterion !!!!" << endl;
+		return -1;
+	}
+}
+
+return -1;
 }

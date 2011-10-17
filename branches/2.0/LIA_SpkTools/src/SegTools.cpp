@@ -335,7 +335,8 @@ ViterbiAccum& createAndInitializeViterbiAccum(StatServer &ss, hmm &cHmm){
 // TAKE CARE: THE accumulator should be reseted before the call
 void   accumulateStatViterbi(FeatureServer &fs,ViterbiAccum &va,unsigned long beginIdx,unsigned long length,Config &config)
 {
-  double fudge=config.getParam("fudge").toDouble();
+  double fudge=1.0;
+  if(config.existsParam("fudge")) fudge=config.getParam("fudge").toDouble();
   unsigned long viterbiBufferLength=config.getParam("viterbiBufferLength").toLong();
   for(unsigned long ifeature=beginIdx;ifeature<=beginIdx+length-viterbiBufferLength;ifeature+=viterbiBufferLength)
     va.computeAndAccumulate(fs, ifeature, viterbiBufferLength,fudge);
