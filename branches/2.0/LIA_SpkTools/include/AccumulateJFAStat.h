@@ -238,6 +238,13 @@ class LIA_SPKTOOLS_API JFAAcc{
 		///
 		void _init(XList & list,Config & config);
 
+		/// main fonction to initialise the accumulator for I-Vector processing
+		/// @param list the XList containing speakers and sessions filenames
+		/// @param config config filename
+		///
+		void _init(XList & list,Config & config, String task);
+
+
 
 	public :
 
@@ -246,6 +253,11 @@ class LIA_SPKTOOLS_API JFAAcc{
 	
 		JFAAcc(String &,Config &);
 		JFAAcc(XList &,Config & );
+
+		JFAAcc(String &,Config &,String);
+		JFAAcc(XList &,Config &, String);
+
+
 		virtual ~JFAAcc();
 		virtual String getClassName() const;
 	
@@ -289,6 +301,10 @@ class LIA_SPKTOOLS_API JFAAcc{
 		/// Reset the tempporary variables used for matrix estimations
 		///
 		void resetTmpAcc();
+
+		/// Reset the tempporary variables used for matrix estimations
+		///
+		void resetTmpAcc(String task);
 
 		/// Load the Eigenvoice Matrix from a file
 		/// @param file name of the matrix file
@@ -653,7 +669,7 @@ class LIA_SPKTOOLS_API JFAAcc{
 		/// Estimate the Z components Matrix using the MAP paradigm
 		/// @param tau Maximum A Posteriori regulation factor
 		/// 
-		void estimateZMAP(unsigned long tau);
+		void estimateZMAP(double tau);
 		
 		/// Update the EigenVoice Matrix
 		///
@@ -734,7 +750,22 @@ class LIA_SPKTOOLS_API JFAAcc{
 		/// Return the XY matrix
 		///
 		Matrix<double> getYX();
+
+		/// Save matrix X
+		/// @param xFilename filename to save the matrix
+		///
+		void saveX(String xFilename,Config &);
+
+		/// Save matrix Y
+		/// @param yFilename filename to save the matrix
+		///
+		void saveY(String yFilename,Config &);
 		
+		/// Save matrix Z
+		/// @param zFilename filename to save the matrix
+		///
+		void saveZ(String zFilename,Config &);
+
 		/// Cut the XY matrix to obtain two matrices X and Y
 		///
 		void splitYX();
@@ -837,6 +868,10 @@ class LIA_SPKTOOLS_API JFAAcc{
 		/// @param config config filename
 		///
 		void substractUXfromFeatures(FeatureServer &fs,Config &config);
+
+		/// Orthonormalize the EigenVoice matrix
+		///
+		void orthonormalizeV();
 
 		///Save Accumulators on disk
 		/// @param config config filename
