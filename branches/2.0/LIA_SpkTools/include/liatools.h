@@ -53,7 +53,7 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 */
 
 #include "GeneralTools.h"
-#include "AccumulateStat.h"
+#include "AccumulateJFAStat.h"
 #include "TrainTools.h"
 #include "SegTools.h"
 #include "Hmm.h"
