@@ -61,88 +61,9 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 #include <cmath>
 #include "liatools.h"
 #include "EigenChannel.h"
-#include "AccumulateJFAStat.h"
 
 using namespace alize;
 using namespace std;
-
-void verifyEMLK(FactorAnalysisStat & FA,XList &ndx,FeatureServer &fs,Config &config) {
-	XLine *pline; String *pFile; ndx.rewind();	
-	double total=0.0;
-	unsigned long maxLLKcomputed=1;
-	maxLLKcomputed=config.getParam("computeLLK").toLong();	
-	bool FALLK=false;
-	if (config.existsParam("FALLK")) {FALLK=true;if(verbose) cout<<"(EigenChannel) Computing Factor Analysis Likelihoods"<<endl;}
-	unsigned long cnt=0;
-	while((pline=ndx.getLine())!=NULL && cnt < maxLLKcomputed) { 
-		while((pFile=pline->getElement())!=NULL && cnt < maxLLKcomputed) {
-			/// Compute FA model
-			MixtureServer ms(config);
-			MixtureGD &model=ms.loadMixtureGD(config.getParam("inputWorldFilename"));
-			if (FALLK) FA.getFactorAnalysisModel(model,*pFile);
-			else FA.getSpeakerModel(model,*pFile);
-			
-			/// Get LLK
-			FeatureServer fs(config,*pFile);
-			SegServer segmentsServer;
-			LabelServer labelServer;
-			initializeClusters(*pFile,segmentsServer,labelServer,config);
-			verifyClusterFile(segmentsServer,fs,config);
-			unsigned long codeSelectedFrame=labelServer.getLabelIndexByString(config.getParam("labelSelectedFrames"));
-			SegCluster& selectedSegments=segmentsServer.getCluster(codeSelectedFrame);  
-			double llk=FA.getLLK(selectedSegments,model,fs,config); 
-			if (verbose) cout << "(EigenChannel) LLK["<<*pFile<<"]="<<llk<<endl;
-			cnt++;
-			total+=llk;
-		}
-	}
-	if (verbose) cout << "(EigenChannel) Total LLK="<<total<<endl;
-}
-
-int EigenChannel(Config & config){
-	unsigned long nbIt=config.getParam("nbIt").toLong();
-	bool _computeLLK=false;
-	if (config.existsParam("computeLLK")) _computeLLK=true;	
-	bool init=false;
-	if (config.existsParam("loadAccs")) init=config.getParam("loadAccs").toBool();;
-
-	XList ndx(config.getParam("ndxFilename"));
-	XLine allFiles=ndx.getAllElements();			
-	FeatureServer fs;
-	
-	if (verbose) cout << "** Create Factor Analysis Statistics Accumulator" << endl;
-	FactorAnalysisStat FA((XList&)ndx,fs,config);	
-	
-	// Init, compute Stats on UBM and save for further experiements
-	if (!init) {
-		fs.init(config,allFiles);		
-		FA.computeAndAccumulateGeneralFAStats(fs,config);
-		FA.saveAccs(config);		
-	}		
-	else FA.loadAccs(config);
-		
-	
-	FA.storeAccs(); // save FA state
-	for(unsigned long i=0;i<nbIt;i++){
-		if (_computeLLK) verifyEMLK(FA,ndx,fs,config);
-		if (verbose) cout << "(EigenChannel) --------- Iteration "<<i<<"--------- "<<endl;
-		FA.estimateAndInverseL(config);
-		FA.substractSpeakerStats();
-		FA.getXEstimate();
-		
-		FA.substractChannelStats(); 
-		FA.getYEstimate();
-
-		FA.getUEstimate(config);
-		if (1) { //should be debug
-			String mat=config.getParam("channelMatrix")+".lastIt";
-			FA.getU().save(mat,config); // save last it matrix in debug mode
-		}
-		FA.restoreAccs(); // restore state
-	}
-	FA.getU().save(config.getParam("channelMatrix"),config);
-return 0;
-}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 int EigenChannelJFA(Config & config){
@@ -151,11 +72,13 @@ int EigenChannelJFA(Config & config){
 	String ndxFilename = config.getParam("ndxFilename");
 	
 	//Create and initialise the accumulator
-	JFAAcc jfaAcc(ndxFilename, config);
+	JFAAcc jfaAcc(ndxFilename, config, "EigenChannelJFA");
 
 	//Option used to check the Likelihood at each iteration
 	bool _checkLLK = false;
 	if (config.existsParam("checkLLK")) _checkLLK= config.getParam("checkLLK").toBool();
+	else if (verboseLevel >=1) _checkLLK= true;
+
 	
 	//Statistics
 	if((config.existsParam("loadAccs")) && config.getParam("loadAccs").toBool()){	//load pre-computed statistics
@@ -233,10 +156,6 @@ int EigenChannelJFA(Config & config){
 		jfaAcc.resetTmpAcc();
 		jfaAcc.restoreAccs();
 
-		//Reinitialise the accumulators
-		jfaAcc.resetTmpAcc();
-		jfaAcc.restoreAccs();
-
 		//Save the U matrix at the end of the iteration
 		bool saveAllMatrices = false;
 		if(config.existsParam("saveAllECMatrices")) saveAllMatrices=config.getParam("saveAllECMatrices").toBool();
@@ -259,6 +178,8 @@ return 0;
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 int EigenChannelLFA(Config & config){
 	
+	if(verbose) cout<<"	Enter EigenChannel mode LFA"<<endl;
+
 	//Read the NDX file
 	String ndxFilename = config.getParam("ndxFilename");
 	
@@ -306,13 +227,11 @@ int EigenChannelLFA(Config & config){
 
 
 	//Initialise the D Matrix with MAP paradigm
-	if(config.getParam("channelCompensation")=="LFA"){
-		jfaAcc.initD(config);
-	}
+	jfaAcc.initD(config);
 
 	//iteratively retrain the EC matrix
 	unsigned long nbIt = config.getParam("nbIt").toULong();
-	
+
 	//Estimate Y factors for each speaker
 	jfaAcc.storeAccs();
 	jfaAcc.estimateVEVT(config);
@@ -372,5 +291,16 @@ int EigenChannelLFA(Config & config){
 
 return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
 
 #endif 
