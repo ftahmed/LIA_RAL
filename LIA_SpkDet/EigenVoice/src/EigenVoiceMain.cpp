@@ -71,11 +71,13 @@ int main(int argc, char* argv[]) {
 		cc.addStringParam("eigenVoiceMatrix",true,true,"filename to save EigenVoice Matrix ");					
 		cc.addIntegerParam("eigenVoiceNumber",true,true,"final rank of EigenVoice matrix");	
 		cc.addStringParam("saveMatrixFormat",true,true,"matrix format: DB (binary) or DT (ascii)");		  
-		cc.addStringParam("loadMatrixFormat",true,true,"matrix format: DB (binary) or DT (ascii)");				
+		cc.addStringParam("loadMatrixFormat",true,true,"matrix format: DB (binary) or DT (ascii)");	
+		cc.addStringParam("channelCompensation",true,true,"JFA or IV for memory allocation specificity");	
+		
 
 		// Optionnal
 		cc.addStringParam("initEigenVoiceMatrix",false,true,"name of the EigenVoice Matrix used for initialisation");
-		cc.addBooleanParam("loadInitEigenVoiceMatrix",false,true,"if true load an EigenVoiceMatrix for initialisation");
+		cc.addBooleanParam("loadInitEigenVoiceMatrix",true,true,"if true load an EigenVoiceMatrix for initialisation");
 		cc.addBooleanParam("loadAccs",false,true,"if true do not compute UBM stats, load matrices");
 		cc.addBooleanParam("checkLLK",false,true,"if true do compute the likelihood of training data after each iteration");
 		cc.addBooleanParam("saveInitEigenVoiceMatrix",false,true,"if true save the matrix used for initialisation");
@@ -110,7 +112,15 @@ int main(int argc, char* argv[]) {
 		if (config.existsParam("verboseLevel"))verboseLevel=config.getParam("verboseLevel").toLong();
 		if (verboseLevel>0) verbose=true;		
 		if (cmdLine.displayHelpRequired()) {cout << cc.getParamList() << endl;}	
-		EigenVoice(config);
+		
+		
+		if(config.getParam("channelCompensation") == "JFA" ){
+			EigenVoice(config);
+		}
+		else if(config.getParam("channelCompensation") == "IV"){
+			IVector(config);
+		}
+		else{}
 	}
 	catch (Exception& e) {cout << e.toString() << cc.getParamList() << endl;}
 if (debug) {
