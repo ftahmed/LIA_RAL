@@ -110,23 +110,30 @@ int main(int argc, char* argv[]){
     if (verbose) verboseLevel=1;else verboseLevel=0;
     if (config.existsParam("verboseLevel"))verboseLevel=config.getParam("verboseLevel").toLong();
     if (verboseLevel>0) verbose=true;
-    bool train=true;                                 // Training the target models
-    if (config.existsParam("info"))                  // Information on the data available for the targets and output a file with good amount of data
+    bool train=true;                                 					// Training the target models
+    if (config.existsParam("info"))                  				// Information on the data available for the targets and output a file with good amount of data
       train=false;
     if (train){
-      if (config.existsParam("byLabelModel"))        // if the paramter is present, for each client, we train one model for each cluster 
-		TrainTargetByLabel(config);                  // (a cluster is a set of segments with the same label)      
-     if (config.existsParam("FactorAnalysis"))        // if the paramter is present, for each client, we train one model for each cluster 
-		TrainTargetFA(config);                  // (a cluster is a set of segments with the same label)
-	bool JFA = false;										//default value for previous versions compatibility
-	bool LFA = false;
-	if (config.existsParam("channelCompensation") && (config.getParam("channelCompensation") == "JFA"))
-		JFA = true;
-	else if (config.existsParam("channelCompensation") && (config.getParam("channelCompensation") == "LFA"))
+		if (config.existsParam("byLabelModel"))    				// if the paramter is present, for each client, we train one model for each cluster 
+			TrainTargetByLabel(config);                  				// (a cluster is a set of segments with the same label)
+		if(config.existsParam("FactorAnalysis"))
+			TrainTargetFA(config);
+		bool JFA = false;										//default value for previous versions compatibility
+		bool LFA = false;
+		bool iVector =false;
+		if (config.existsParam("channelCompensation") && (config.getParam("channelCompensation") == "JFA")){
+			JFA = true;
+		}
+		else if (config.existsParam("channelCompensation") && (config.getParam("channelCompensation") == "LFA")){
 			LFA=true;
-	if (JFA)		TrainTargetJFA(config);    					// if JFA is true, for each client, we train one model for each cluster 
-	else if (LFA)	TrainTargetLFA(config);
-    else TrainTarget(config);  
+		}
+//		if (config.existsParam("iVector") && (config.getParam("iVector") == "true")){
+//			iVector = true;
+//		}
+		if (JFA)		TrainTargetJFA(config);    					// if JFA is true, for each client, we train one model for each cluster 
+		else if (LFA)		TrainTargetLFA(config);
+//		else if (iVector)	TrainTargetIVector(config);
+		else				TrainTarget(config);  
     }
     else   InfoTarget(config);   
     
@@ -134,5 +141,3 @@ int main(int argc, char* argv[]){
   }
   catch(alize::Exception & e){ cout <<"TrainTarget "<< e.toString() << endl << cc.getParamList()<<endl;}
 }
-
-
