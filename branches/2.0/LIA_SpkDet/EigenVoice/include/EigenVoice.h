@@ -62,6 +62,7 @@ using namespace alize;
 using namespace std;
 
 int EigenVoice(Config &);
+int IVector(Config &);
 
 #endif 
 
