@@ -76,9 +76,10 @@ int main(int argc, char* argv[]) {
 		cc.addIntegerParam("windowLLRDec",false,true, "if windowLLR is set, gives the shift of the window (default windowLLRSize)");
 		cc.addBooleanParam("byLabelModel",false,true, "if the parameter is present, we work with a model by client and by  cluster (default false)");
 		cc.addBooleanParam("histoMode",false,true, "if the parameter is present, entropy of LR distrib is used as score (default false)");
-		cc.addStringParam("channelCompensation",true,true,"if set to [ NAP | FA | JFA | LFA | 'empty'], launch the corresponding channel compensation (default not set)");
+		cc.addStringParam("channelCompensation",true,true,"if set to NAP or JFA, launch the corresponding channel compensation (default not set)");
+	
 
-	try {
+		try {
 		CmdLine cmdLine(argc, argv);
 		if (cmdLine.displayHelpRequired()){
 		cout << "************************************" << endl;
@@ -106,17 +107,11 @@ int main(int argc, char* argv[]) {
 		ComputeTestByLabel(config);
 		if (config.existsParam("histoMode"))        // if the parameter is present, entropy of LR distrib is used as score
 		ComputeTestHisto(config);
-		
 		if (config.getParam("channelCompensation")=="JFA"){ 
-			if(config.getParam("Scoring") == "FrameByFrame")	
-				ComputeTestJFA(config);
-			else if(config.getParam("Scoring") == "DotProduct")		
-				ComputeTestDotProduct(config);
+			if(config.getParam("Scoring") == "FrameByFrame")		ComputeTestJFA(config);
+			else if(config.getParam("Scoring") == "DotProduct")		ComputeTestDotProduct(config);
 		}
-		else if (config.getParam("channelCompensation")=="LFA")		
-			ComputeTestLFA(config);
-		else if (config.getParam("channelCompensation")=="FA")		
-			ComputeTestFA(config);
+		else if (config.getParam("channelCompensation")=="LFA")		ComputeTestLFA(config);
 		else if(config.getParam("channelCompensation")=="NAP")
 			ComputeTestNAP(config);
 		else
