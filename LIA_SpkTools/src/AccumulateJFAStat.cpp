@@ -93,23 +93,61 @@ using namespace std;
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 JFAAcc::JFAAcc(String & featFilename,Config & config)
 	:_ms(config),_ss(config){ // constructor for a single file
+		XList jfaNdx;
 
-	XLine& tmpLine = XLine::create();
-	tmpLine.addElement(featFilename);
+		if(featFilename.endsWith(".ndx")){
+			jfaNdx.load(featFilename,config);
+		}
+		else{
 
-	XList jfaNdx;
-	jfaNdx.addLine()=tmpLine;
+			if(verboseLevel >1)cout<<"Init JFAAcc with only one file"<<endl;
+			XLine& tmpLine = XLine::create();
+			tmpLine.addElement(featFilename);
 
-//	XList jfaNdx(featFilename,config);
-	_init(jfaNdx,config);
-
+			//XList jfaNdx;
+			jfaNdx.addLine()=tmpLine;
+		}
+		_init(jfaNdx,config);
 }
+
+
+
+
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+JFAAcc::JFAAcc(String & featFilename,Config & config, String task)
+	:_ms(config),_ss(config){ // constructor for a single file
+		XList jfaNdx;
+
+		if(featFilename.endsWith(".ndx")){
+			jfaNdx.load(featFilename,config);
+		}
+		else{
+
+			if(verboseLevel >1)cout<<"Init JFAAcc with only one file"<<endl;
+			XLine& tmpLine = XLine::create();
+			tmpLine.addElement(featFilename);
+
+			//XList jfaNdx;
+			jfaNdx.addLine()=tmpLine;
+		}
+		_init(jfaNdx,config,task);
+}
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 JFAAcc::JFAAcc(XList & ndx,Config & config)
 	:_ms(config),_ss(config){ // constructor
 	_init(ndx,config);
 }
+
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+JFAAcc::JFAAcc(XList & ndx,Config & config,String task)
+	:_ms(config),_ss(config){ // constructor
+	_init(ndx,config,task);
+}
+
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 JFAAcc::~JFAAcc(){
@@ -262,12 +300,210 @@ void JFAAcc::_init(XList &ndx, Config &config){
 
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void JFAAcc::_init(XList &ndx, Config &config, String task){
+
+	//task can take values:
+	// Accumulate
+	// EigenVoice
+	// EigenChannelLFA
+	// EigenChannelJFA
+	// EstimateD
+	// TrainTarget
+	// ComputeTest
+
+	///Convert the NDX file
+	_fileList=ndx;
+	_ndxTable=JFATranslate(ndx); 
+	///Load the UBM
+	MixtureGD& UBM = _ms.loadMixtureGD(config.getParam("inputWorldFilename"));
+
+	_vectSize = UBM.getVectSize();
+	_n_distrib = UBM.getDistribCount();
+	_svSize = _vectSize*_n_distrib;
+
+	_rankEV=1;
+	if(config.existsParam("eigenVoiceNumber"))
+		_rankEV=config.getParam("eigenVoiceNumber").toULong();
+	_rankEC=1;
+	if(config.existsParam("eigenChannelNumber"))
+		_rankEC=config.getParam("eigenChannelNumber").toULong();
+	
+	///Read NDX file
+	_n_speakers=_fileList.getLineCount();
+	_n_sessions=_fileList.getAllElements().getElementCount();
+	
+	_ubm_means.setSize(_svSize);
+	_ubm_invvar.setSize(_svSize);
+
+	///Create UBM supervectors
+	for(unsigned long i=0;i<_n_distrib;i++){
+		DistribGD & dis=UBM.getDistrib(i);
+		DoubleVector & c=dis.getCovInvVect();
+		DoubleVector & m=dis.getMeanVect();
+		for(unsigned long j=0;j<_vectSize;j++){
+			_ubm_means[i*_vectSize+j]=m[j];
+			_ubm_invvar[i*_vectSize+j]=c[j];
+		}
+	}
+
+	///Create and initialise statistics acumulators
+	_matN= Matrix<double>(_n_speakers, _n_distrib);
+	_N_h= Matrix<double>(_n_sessions, _n_distrib);
+	_F_X= Matrix<double>(_n_speakers, _n_distrib*_vectSize);
+	_F_X_h= Matrix<double>(_n_sessions, _n_distrib*_vectSize);
+	_matN.setAllValues(0.0);
+	_N_h.setAllValues(0.0);
+	_F_X.setAllValues(0.0);
+	_F_X_h.setAllValues(0.0);
+	
+	///Create and initialise statistics acumulators
+	_cN= Matrix<double>(_n_speakers, _n_distrib);
+	_cN_h= Matrix<double>(_n_sessions, _n_distrib);
+	_cF_X= Matrix<double>(_n_speakers, _n_distrib*_vectSize);
+	_cF_X_h= Matrix<double>(_n_sessions, _n_distrib*_vectSize);
+	_cN.setAllValues(0.0);
+	_cN_h.setAllValues(0.0);
+	_cF_X.setAllValues(0.0);
+	_cF_X_h.setAllValues(0.0);
+	
+	///Initialise Matrices
+	_D.setSize(_svSize);
+	_D.setAllValues(0.0);
+	
+	_V.setDimensions(_rankEV, _svSize);
+	_V.setAllValues(0.0);
+	
+	_matU.setDimensions(_rankEC, _svSize);
+	_matU.setAllValues(0.0);
+
+	if((task == "TrainTarget")||(task == "ComputeTest")){
+		_VU.setDimensions(_rankEV + _rankEC, _svSize);
+		_VU.setAllValues(0.0);
+	}
+	else{
+		_VU.setDimensions(1,1);
+		_VU.setAllValues(0.0);
+	}
+
+	_Z.setDimensions(_n_speakers, _svSize);
+	_Z.setAllValues(0.0);
+
+	_Y.setDimensions(_n_speakers, _rankEV);
+	_Y.setAllValues(0.0);
+	
+	_matX.setDimensions(_n_sessions, _rankEC);
+	_matX.setAllValues(0.0);
+
+
+	if((task == "TrainTarget")||(task == "ComputeTest")){
+		_YX.setDimensions(_n_speakers, _rankEV + _rankEC);
+		_YX.setAllValues(0.0);
+	}
+	else{
+		_YX.setDimensions(1, _rankEV + _rankEC);
+		_YX.setAllValues(0.0);
+	}
+	
+	///Create the accumulators for L matrices computation
+	for(unsigned long s =0; s<_n_distrib; s++){
+		_vEvT.addObject(*new DoubleSquareMatrix(_rankEV));
+		_vEvT[s].setAllValues(0.0);
+	}
+
+	if((task == "EigenChannelJFA")||(task == "EigenChannelLFA")||(task == "EstimateD")||(task == "TrainTarget")||(task == "ComputeTest")){
+		for(unsigned long s =0; s<_n_distrib; s++){
+			_uEuT.addObject(*new DoubleSquareMatrix(_rankEC));
+			_uEuT[s].setAllValues(0.0);
+		}
+	}
+	else{
+		for(unsigned long s =0; s<1; s++){
+			_uEuT.addObject(*new DoubleSquareMatrix(1));
+			_uEuT[s].setAllValues(0.0);
+		}
+	}
+
+	if((task == "TrainTarget")||(task == "ComputeTest")){
+		for(unsigned long s =0; s<_n_distrib; s++){
+			_vuEvuT.addObject(*new DoubleSquareMatrix(_rankEV + _rankEC));
+			_vuEvuT[s].setAllValues(0.0);
+		}
+	}
+	else{
+		for(unsigned long s =0; s<1; s++){
+			_vuEvuT.addObject(*new DoubleSquareMatrix(1));
+			_vuEvuT[s].setAllValues(0.0);
+		}
+	}
+
+	///Create accumulators to compute and inverse L matrices for Eigenvoices
+	for(unsigned long spk =0; spk<_n_speakers; spk++){
+		_l_spk_inv.addObject(*new DoubleSquareMatrix(_rankEV));
+		_l_spk_inv[spk].setAllValues(0.0);
+	}
+	
+	//Create accumulators to compute and inverse L matrices for EigenChannel
+	if((task == "EigenChannelJFA")||(task == "EigenChannelLFA")||(task == "EstimateD")||(task == "TrainTarget")||(task == "ComputeTest")){
+		for(unsigned long sess =0; sess<_n_sessions; sess++){
+			_l_sess_inv.addObject(*new DoubleSquareMatrix(_rankEC));
+			_l_sess_inv[sess].setAllValues(0.0);
+		}
+	}
+	else{
+		for(unsigned long sess =0; sess<1; sess++){
+			_l_sess_inv.addObject(*new DoubleSquareMatrix(1));
+			_l_sess_inv[sess].setAllValues(0.0);
+		}
+	}
+
+	///Create accumulators to compute and inverse L matrices for training phase
+	if((task == "TrainTarget")||(task == "ComputeTest")){
+		for(unsigned long spk =0; spk<_n_speakers; spk++){
+			_l_yx_inv.addObject(*new DoubleSquareMatrix(_rankEV + _rankEC));
+			_l_yx_inv[spk].setAllValues(0.0);
+		}
+	}
+	else{
+		for(unsigned long spk =0; spk<1; spk++){
+			_l_yx_inv.addObject(*new DoubleSquareMatrix(1));
+			_l_yx_inv[spk].setAllValues(0.0);
+		}
+	}
+	
+	///Create accumulators to compute the EigenVoices matrix
+	for(unsigned long spk =0; spk<_n_distrib; spk++){
+		_Aev.addObject(*new DoubleSquareMatrix(_rankEV));
+		_Aev[spk].setAllValues(0.0);
+	}
+	_Cev.setDimensions(_rankEV,_svSize);
+	_Cev.setAllValues(0.0);
+
+
+	///Create accumulators to compute the EigenChannel matrix
+	if((task == "EigenChannelJFA")||(task == "EigenChannelLFA")||(task == "EstimateD")||(task == "TrainTarget")||(task == "ComputeTest")){
+		for(unsigned long spk =0; spk<_n_distrib; spk++){
+			_Aec.addObject(*new DoubleSquareMatrix(_rankEC));
+			_Aec[spk].setAllValues(0.0);
+		}
+		_Cec.setDimensions(_rankEC,_svSize);
+		_Cec.setAllValues(0.0);
+	}
+	else{
+		for(unsigned long spk =0; spk<1; spk++){
+			_Aec.addObject(*new DoubleSquareMatrix(1));
+			_Aec[spk].setAllValues(0.0);
+		}
+		_Cec.setDimensions(1,1);
+	}
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::computeAndAccumulateJFAStat(Config& config){
 	
 	//STILL TO IMPLEMENT A THREADED VERSION OF THIS FUNCTION
 	
 //	#ifdef THREAD          
-//	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0){
+//	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0){
 //		computeAndAccumulateJFAStatThreaded(config);				//accumulate stats
 //	}
 //	else	computeAndAccumulateJFAStatUnThreaded(config); 			//unthreaded version
@@ -285,13 +521,14 @@ void JFAAcc::computeAndAccumulateJFAStatUnThreaded(Config& config){
 	///Create and initialise the feature server
 	FeatureServer fs;
 	XLine allFiles=_fileList.getAllElements();
+
 	fs.init(config, allFiles);
-	
+
 	///Create and initialise feature clusters
 	SegServer segmentsServer;
 	LabelServer labelServer;
 	initializeClusters(allFiles,segmentsServer,labelServer,config);
-	
+
 	verifyClusterFile(segmentsServer,fs,config);
 	unsigned long codeSelectedFrame=labelServer.getLabelIndexByString(config.getParam("labelSelectedFrames"));
 
@@ -362,7 +599,8 @@ void JFAAcc::computeAndAccumulateJFAStat(SegCluster &selectedSegments,FeatureSer
 	double *n_h, *n, *f_x_h, *f_x;	
 	n_h=_N_h.getArray(); n=_matN.getArray(); f_x_h=_F_X_h.getArray();f_x=_F_X.getArray();
 	
-	///Compute Occupations and Statistics	acc.resetOcc();
+	///Compute Occupations and Statistics	
+	acc.resetOcc();
 	Seg *seg; 
 	selectedSegments.rewind();
 	
@@ -418,7 +656,6 @@ void JFAAcc::resetTmpAcc(){
 	
 	_Cev.setAllValues(0.0);
 	_Cec.setAllValues(0.0);
-	
 	///Reinitialise accumulators for L matrices computation
 	for(unsigned long s =0; s<_n_distrib; s++){
 		_vEvT[s].setAllValues(0.0);
@@ -432,18 +669,93 @@ void JFAAcc::resetTmpAcc(){
 	for(unsigned long spk =0; spk<_n_speakers; spk++){
 		_l_spk_inv[spk].setAllValues(0.0);
 	}
+
 	for(unsigned long session =0; session<_n_speakers; session++){
 		_l_sess_inv[session].setAllValues(0.0);
 	}
 }
 
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void JFAAcc::resetTmpAcc(String task){
+	
+	_Cev.setAllValues(0.0);
+	_Cec.setAllValues(0.0);
+	///Reinitialise accumulators for L matrices computation
+	for(unsigned long s =0; s<_n_distrib; s++){
+		_vEvT[s].setAllValues(0.0);
+		_Aev[s].setAllValues(0.0);
+	}
+
+	///Reinitialise accumulators for L matrices computation
+	unsigned long tmpDistribNb;
+	if((task == "EigenChannelJFA")||(task == "EigenChannelLFA")||(task == "EstimateD")||(task == "TrainTarget")||(task == "ComputeTest")){
+		tmpDistribNb = _n_distrib;
+	}
+	else{
+		tmpDistribNb = 1;
+	}
+
+	for(unsigned long s =0; s<tmpDistribNb; s++){
+		_uEuT[s].setAllValues(0.0);
+		_Aec[s].setAllValues(0.0);
+	}
+
+	///Reinitialise accumulators for L matrices computation and inversion
+	for(unsigned long spk =0; spk<_n_speakers; spk++){
+		_l_spk_inv[spk].setAllValues(0.0);
+	}
+
+	unsigned long tmpSpkNb;
+	if((task == "EigenChannelJFA")||(task == "EigenChannelLFA")||(task == "EstimateD")||(task == "TrainTarget")||(task == "ComputeTest")){
+		tmpSpkNb = _n_speakers;
+	}
+	else{
+		tmpSpkNb = 1;
+	}
+	for(unsigned long session =0; session<tmpSpkNb; session++){
+		_l_sess_inv[session].setAllValues(0.0);
+	}
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+//void JFAAcc::resetTmpAccIV(){
+//	
+//	_Cev.setAllValues(0.0);
+//	_Cec.setAllValues(0.0);
+//	///Reinitialise accumulators for L matrices computation
+//	for(unsigned long s =0; s<_n_distrib; s++){
+//		_vEvT[s].setAllValues(0.0);
+//		//_uEuT[s].setAllValues(0.0);
+//		
+//		_Aev[s].setAllValues(0.0);
+//		//_Aec[s].setAllValues(0.0);
+//	}
+//
+//	///Reinitialise accumulators for L matrices computation and inversion
+//	for(unsigned long spk =0; spk<_n_speakers; spk++){
+//		_l_spk_inv[spk].setAllValues(0.0);
+//	}
+//
+////	for(unsigned long session =0; session<_n_speakers; session++){
+////		_l_sess_inv[session].setAllValues(0.0);
+////	}
+//}
+
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::loadEV(const String& evFilename, Config& config){	///load an EigenVoices Matrix
 	String filename = config.getParam("matrixFilesPath") + evFilename +  config.getParam("saveMatrixFilesExtension");
 	_V.load (filename, config);
+
+	//Transpose the matrix if the number of line is higher than the numbe of columns
+	if(_V.cols()<_V.rows()){
+		cout<<"Load EV : number of lines ( "<<_V.rows() <<" ) higher than the number of columns ( "<<_V.cols()<<" ("<<endl;
+		_V.transpose();
+	}
 	_rankEV=_V.rows();
 
-	if(_rankEV != config.getParam("eigenVoiceNumber").toLong()){
+	if(_rankEV != config.getParam("eigenVoiceNumber").toULong()){
 		throw Exception("Incorrect dimension of EigenVoice Matrix",__FILE__,__LINE__);
 	}
 
@@ -455,7 +767,17 @@ void JFAAcc::loadEV(Matrix<double> & V, Config& config){
 	_rankEV=V.rows();
 	_V=V;
 
-	if(_rankEV != config.getParam("eigenVoiceNumber").toLong()){
+	//Transpose the matrix if the number of line is higher than the numbe of columns
+	if(_V.cols()<_V.rows()){
+		cout<<"Load EV : number of lines higher than the number of columns"<<endl;
+		_V.transpose();
+	}
+
+	unsigned long rankEV = 1;
+	if(config.existsParam("eigenVoiceNumber"))
+		rankEV = config.getParam("eigenVoiceNumber").toULong();
+
+	if(_rankEV != config.getParam("eigenVoiceNumber").toULong()){
 		throw Exception("Incorrect dimension of EigenVoice Matrix",__FILE__,__LINE__);
 	}
 
@@ -467,7 +789,7 @@ void JFAAcc::loadEC(const String& ecFilename, Config& config){	///load an EigenC
 	_matU.load (filename, config);
 	_rankEC=_matU.rows();
 
-	if(_rankEC != config.getParam("eigenChannelNumber").toLong()){
+	if(_rankEC != config.getParam("eigenChannelNumber").toULong()){
 		throw Exception("Incorrect dimension of EigenChannel Matrix",__FILE__,__LINE__);
 	}
 
@@ -479,7 +801,11 @@ void JFAAcc::loadEC(Matrix<double> & U, Config& config){
 	_rankEC=U.rows();
 	_matU=U;
 
-	if(_rankEC != config.getParam("eigenChannelNumber").toLong()){
+	unsigned long rankEC = 1;
+	if(config.existsParam("eigenChannelNumber"))
+		rankEC = config.getParam("eigenChannelNumber").toULong();
+
+	if(_rankEC != rankEC){
 		throw Exception("Incorrect dimension of EigenChannel Matrix",__FILE__,__LINE__);
 	}
 }
@@ -500,7 +826,7 @@ void JFAAcc::loadD(const String& dFilename, Config& config){	///load a D Matrix
 			_D[i] = d[i];
 		}
 	}
-	cout << "(AccumulateJFAStat) Init D from "<< filename <<"  for EigenChannel Matrix: "<<endl;
+	cout << "(AccumulateJFAStat) Init D from "<< filename <<"  for D Matrix: "<<endl;
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -561,36 +887,82 @@ void JFAAcc::loadF_X_h(Config& config){
 void JFAAcc::initEV(Config& config){		///random initialisation of the EigenVoices Matrix
 		_rankEV=config.getParam("eigenVoiceNumber").toULong();
 		_V.setDimensions(_rankEV,_svSize);
-//		srand48(_svSize*_rankEV);
-//		_V.randomInit();
 
-		//Initialise with a normal distribution random process
-		double norm=0;
-		for(unsigned long k=0; k<_svSize; k++){
-			norm += _ubm_invvar[k];
-		}
+		//Two type of random initializations
+		//	normal  : random with a normal law by using a Box-Muller Generator
+		//	uniform : random with a uniform distribution
+try{
+		String randomLaw = "normal";
+		if(config.existsParam("randomInitLaw"))	randomLaw = config.getParam("randomInitLaw");
 
-		boxMullerGeneratorInit();
-		for(unsigned long i=0; i<_V.rows(); i++){
-			for(unsigned long j=0; j<_V.cols(); j++){
-				double val = boxMullerGenerator(0.0, 1.0);
-				while((ISNAN(val)) || (ISINF(val))){
-					val = boxMullerGenerator(0.0, 1.0);
+		//Initialize the matrix by generating random values following a uniform law
+		if(config.getParam("randomInitLaw") == "uniform"){
+
+			srand48(_svSize*_rankEV);
+			_V.randomInit();
+
+			double norm=0;
+			for(unsigned long k=0; k<_svSize; k++){
+				norm += _ubm_invvar[k];
+			}
+			norm = norm/_svSize;
+			for(unsigned long i=0; i<_V.rows(); i++){
+				for(unsigned long j=0; j<_V.cols(); j++){
+					_V(i,j) = _V(i,j)*norm;
 				}
-				_V(i,j) = val * norm * 0.001;
 			}
 		}
-		if (verboseLevel >=1) cout << "(AccumulateJFAStat) Random Init for EigenVoices Matrix with Box-Muller method "<<", rank: ["<<_V.rows() << "] sv size: [" << _V.cols() <<"]"<<endl;
+
+		//Initialize the matrix by generating random values following a normal law whose mean is 0 and variance is 
+		//th norm of the Covariance matrix from the UBM multiplied by 0.001
+		else if (config.getParam("randomInitLaw") == "normal"){
+			double norm=0;
+			for(unsigned long k=0; k<_svSize; k++){
+				norm += _ubm_invvar[k];
+			}
+
+			boxMullerGeneratorInit();
+			for(unsigned long i=0; i<_V.rows(); i++){
+				for(unsigned long j=0; j<_V.cols(); j++){
+					double val = boxMullerGenerator(0.0, 1.0);
+					while((ISNAN(val)) || (ISINF(val))){
+						val = boxMullerGenerator(0.0, 1.0);
+					}
+					_V(i,j) = val * norm * 0.001;
+				}
+			}
+		}
+		else{
+			throw Exception("Selected random initialization law does not exist",__FILE__,__LINE__);
+		}
+		if (verboseLevel >=1) cout << "(AccumulateJFAStat) Random Init for EigenVoices Matrix with "<<randomLaw<<" law "<<", rank: ["<<_V.rows() << "] sv size: [" << _V.cols() <<"]"<<endl;
+}
+catch (Exception& e){ 
+	cout << e.toString().c_str() << endl;
+}
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::initEC(Config& config){		///random initialisation of the EigenChannel Matrix
 		_rankEC=config.getParam("eigenChannelNumber").toULong();
 		_matU.setDimensions(_rankEC,_svSize);
-//		srand48(_svSize*_rankEC);
-//		_matU.randomInit();
 
-		//Initialise with a normal distribution random process
+		//Two type of random initializations
+		//	normal  : random with a normal law by using a Box-Muller Generator
+		//	uniform : random with a uniform distribution
+try{
+	String randomLaw = "normal";
+	if(config.existsParam("randomInitLaw"))	randomLaw = config.getParam("randomInitLaw");
+
+	//Initialize the matrix by generating random values following a uniform law
+	if(config.getParam("randomInitLaw") == "uniform"){
+		srand48(_svSize*_rankEC);
+		_matU.randomInit();
+	}
+
+	//Initialize the matrix by generating random values following a normal law whose mean is 0 and variance is 
+	//th norm of the Covariance matrix from the UBM multiplied by 0.001
+	else if (config.getParam("randomInitLaw") == "normal"){
 		double norm=0;
 		for(unsigned long k=0; k<_svSize; k++){
 			norm += _ubm_invvar[k];
@@ -606,25 +978,70 @@ void JFAAcc::initEC(Config& config){		///random initialisation of the EigenChann
 				_matU(i,j) = val * norm * 0.001;
 			}
 		}
-		cout << "(AccumulateJFAStat) Random Init for EigenChannel Matrix: "<<", rank: ["<<_matU.rows() << "] sv size: [" << _matU.cols() <<"]"<<endl;
+	}
+	else{
+		throw Exception("Slected random initialization law does not exist",__FILE__,__LINE__);
+	}
+	if (verboseLevel >=1) cout << "(AccumulateJFAStat) Random Init for EigenChannel Matrix with "<<randomLaw<<" law "<<", rank: ["<<_matU.rows() << "] sv size: [" << _matU.cols() <<"]"<<endl;
+}
+catch (Exception& e){ 
+	cout << e.toString().c_str() << endl;
+}
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
-void JFAAcc::initD(Config& config){			///random initialisation of the D Matrix
+void JFAAcc::initD(Config& config){			///initialisation of the D Matrix
 		Matrix<double> D;
 		D.setDimensions(1,_svSize);
 
-		//Initialise with the MAP value
+try{
+
+	//Choose the initialisation type for D
+	String initDType = "MAP";
+	if(config.existsParam("initDType"))	initDType = config.getParam("initDType");
+
+	//Random initalisation using a uniform law
+	if(initDType == "uniform"){
+		srand48(_svSize);
+		D.randomInit();
+		for(unsigned long i=0; i<_svSize; i++){
+			_D[i] = D(1,i);
+		}
+		cout<< "(AccumulateJFAStat) Init D Matrix with uniform random law :  sv size: [" << _D.size() <<"]"<<endl;
+	}
+	else if(initDType == "normal"){
+		double norm=0;
+		for(unsigned long k=0; k<_svSize; k++){
+			norm += _ubm_invvar[k];
+		}
+
+		boxMullerGeneratorInit();
+		for(unsigned long i=0; i<_svSize; i++){
+			double val = boxMullerGenerator(0.0, 1.0);
+			while((ISNAN(val)) || (ISINF(val))){
+				val = boxMullerGenerator(0.0, 1.0);
+			}
+			_D[i] = val * norm * 0.001;
+		}
+		cout<< "(AccumulateJFAStat) Init D Matrix with Box-Muller random generator :  sv size: [" << _D.size() <<"]"<<endl;
+	}
+	else if(initDType == "MAP"){
 		for(unsigned long i=0; i<_svSize; i++){
 			_D[i] = sqrt(1.0/(_ubm_invvar[i]*config.getParam("regulationFactor").toDouble()));
 		}
-
-		cout<< "(AccumulateJFAStat) Random Init for D Matrix:  sv size: [" << _D.size() <<"]"<<endl;
+		cout<< "(AccumulateJFAStat) Init D Matrix with MAP :  sv size: [" << _D.size() <<"]"<<endl;
+	}
+	else{
+		throw Exception("Selected D matrix initialization parameter does not exist",__FILE__,__LINE__);
+	}
+}
+catch (Exception& e){ 
+	cout << e.toString().c_str() << endl;
+}	
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::initVU(){
-
 	_VU.concatCols(_V,_matU);
 }
 
@@ -655,7 +1072,7 @@ void JFAAcc::saveD(const String& filename, Config& config){
 void JFAAcc::estimateVEVT(Config &config){
 	
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateVEVTThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateVEVTThreaded(config.getParam("numThread").toULong());
 	else estimateVEVTUnThreaded();
 	#else
 	estimateVEVTUnThreaded();
@@ -672,6 +1089,7 @@ void JFAAcc::estimateVEVTUnThreaded(){
 
 		///Compute  _vEvT matrices
 		double *vEvT, *v, *E;
+		_vEvT[d].setAllValues(0.0);		//ajout du 2011/07/06 pour etre comme la partie threadee
 		vEvT= _vEvT[d].getArray();
 		v= ssV.getArray();
 		E= _ubm_invvar.getArray();
@@ -685,7 +1103,7 @@ void JFAAcc::estimateVEVTUnThreaded(){
 		}
 		
 		for(unsigned long i=0;i<_rankEV;i++){
-		for(unsigned long j=i+1;j<_rankEV;j++) {
+			for(unsigned long j=i+1;j<_rankEV;j++) {
 				vEvT[i*_rankEV+j] = vEvT[j*_rankEV+i];
 			}
 		}
@@ -735,7 +1153,7 @@ void *VEVthread(void *threadarg) {
 					vevt[i*_rankEV+j] += v[(i*_svSize)+(d*_vectSize)+k] * E[d*_vectSize+k] * v[(j*_svSize)+(d*_vectSize)+k];
 				}
 			}
-		}	
+		}
 
 		for(unsigned long i=0;i<_rankEV;i++){
 			for(unsigned long j=i+1;j<_rankEV;j++) {
@@ -743,6 +1161,7 @@ void *VEVthread(void *threadarg) {
 			}
 		}
 	}
+
 	pthread_exit((void*) 0);
 	return (void*)0 ;
 }
@@ -768,16 +1187,16 @@ void JFAAcc::estimateVEVTThreaded(unsigned long NUM_THREADS){
 	unsigned long offset=_n_distrib/NUM_THREADS;
 	
 	unsigned long disBottom = 0;
-	unsigned long disUp=0;
+	unsigned long disUp = 0;
 	unsigned long re=_n_distrib - NUM_THREADS*offset;
 	
 	//Create threads : one per distribution as a maximum
 	for(unsigned long t=0; t<NUM_THREADS; t++){
 	
-		disUp = disBottom +offset;
+		disUp = disBottom + offset;
 		if(t<re) disUp +=1;
 
-		thread_data_array[t].V=V;
+		thread_data_array[t].V = V;
 		thread_data_array[t].ubm_invvar=ubm_invvar;
 		thread_data_array[t].disBottom=disBottom;
 		thread_data_array[t].disUp=disUp;
@@ -789,16 +1208,18 @@ void JFAAcc::estimateVEVTThreaded(unsigned long NUM_THREADS){
 		if (verboseLevel > 1) cout<<"(AccumulateJFAStat) Creating thread n["<< t<< "] for distributions["<<disBottom<<"-->"<<disUp<<"]"<<endl;
 		rc = pthread_create(&threads[t], &attr, VEVthread, (void *)&thread_data_array[t]);
 		if (rc) throw Exception("ERROR; return code from pthread_create() is ",__FILE__,rc);
-		
+
 		disBottom = disUp;
 	}
-	
+
 	pthread_attr_destroy(&attr);
+
 	for(unsigned long t=0; t<NUM_THREADS; t++) {
 		rc = pthread_join(threads[t], (void **)&status);
 		if (rc)  throw Exception("ERROR; return code from pthread_join() is ",__FILE__,rc);
 		if (verboseLevel >1) cout <<"(AccumulateJFAStat) Completed join with thread ["<<t<<"] status["<<status<<"]"<<endl;
 	}
+
 
 	free(thread_data_array);
 	free(threads);
@@ -810,7 +1231,7 @@ void JFAAcc::estimateVEVTThreaded(unsigned long NUM_THREADS){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateUEUT(Config &config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateUEUTThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateUEUTThreaded(config.getParam("numThread").toULong());
 	else estimateUEUTUnThreaded();
 	#else
 	estimateUEUTUnThreaded();
@@ -969,7 +1390,7 @@ void JFAAcc::estimateUEUTThreaded(unsigned long NUM_THREADS){
 void JFAAcc::estimateVUEVUT(Config &config){
 	
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateVUEVUTThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateVUEVUTThreaded(config.getParam("numThread").toULong());
 	else estimateVUEVUTUnThreaded();
 	#else
 	estimateVUEVUTUnThreaded();
@@ -981,7 +1402,6 @@ void JFAAcc::estimateVUEVUTUnThreaded(){
         if (verboseLevel >= 1) cout << "(AccumulateJFAStat) compute VU * Sigma-1 * VU "<<endl;
 
 	for(unsigned long d=0; d<_n_distrib; d++){
-
 		Matrix<double>ssVU= _VU.crop(0,d*_vectSize, _rankEV + _rankEC,_vectSize);
 
 		///Compute _uEuT matrices
@@ -1036,7 +1456,7 @@ void *VUEVUthread(void *threadarg) {
 	unsigned long _vectSize=my_data->vectSize;
 
 	for (unsigned long d=disBottom;d <disUp;d++){
-		
+	
 		DoubleSquareMatrix &vuEvuT=(*(my_data->vuevuT))[d];
 		vuEvuT.setAllValues(0.0);
 		double *vuevut = vuEvuT.getArray();
@@ -1120,7 +1540,7 @@ void JFAAcc::estimateVUEVUTThreaded(unsigned long NUM_THREADS){
 #endif
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
-void  JFAAcc::getVY(DoubleVector &vy, String &file){		///Compute VY for the given file
+void  JFAAcc::getVY(DoubleVector &vy, String &file){		///Compute VY for the speaker corresponding to the given file given file
 	vy.setAllValues(0.0);	
 	
 	double *v, *y; y=_Y.getArray(); v=_V.getArray();
@@ -1323,7 +1743,6 @@ void JFAAcc::getMplusVYplusDZ(DoubleVector &Sp, String& file){
 void JFAAcc::getMplusVYplusDZ(DoubleVector &Sp, unsigned long spk){
 	Sp.setAllValues(0.0);
 	DoubleVector vy(_svSize,_svSize);
-
 	getVY(vy,spk);
 	for (unsigned long i=0;i<_svSize;i++){
 		Sp[i]=_ubm_means[i] + vy[i] +_D[i]*_Z(spk,i);
@@ -1357,7 +1776,7 @@ void JFAAcc::getMplusVUYX(DoubleVector &Sp, unsigned long spk){
 void JFAAcc::estimateAndInverseL_EV(Config& config){
 	
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateAndInverseLThreaded_EV(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateAndInverseLThreaded_EV(config.getParam("numThread").toULong());
 	else estimateAndInverseLUnThreaded_EV();
 	#else
 	estimateAndInverseLUnThreaded_EV();
@@ -1523,9 +1942,8 @@ void JFAAcc::estimateAndInverseLThreaded_EV(unsigned long NUM_THREADS){
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateAndInverseL_EC(Config& config){
-
 	#ifdef THREAD    
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateAndInverseLThreaded_EC(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateAndInverseLThreaded_EC(config.getParam("numThread").toULong());
 	else estimateAndInverseLUnThreaded_EC();
 	#else
 	estimateAndInverseLUnThreaded_EC();
@@ -1540,7 +1958,6 @@ void JFAAcc::estimateAndInverseLUnThreaded_EC(){
 	DoubleSquareMatrix L(_rankEC);
 
 	for(unsigned long sess=0; sess<_n_sessions; sess++){
-
 		L.setAllValues(0.0);
 		for(unsigned long i=0; i<_rankEC; i++){	L(i,i)=1.0;}
 
@@ -1689,7 +2106,7 @@ void JFAAcc::estimateAndInverseLThreaded_EC(unsigned long NUM_THREADS){
 void JFAAcc::estimateAndInverseL_VU(Config& config){
 
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateAndInverseLThreaded_VU(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateAndInverseLThreaded_VU(config.getParam("numThread").toULong());
 	else estimateAndInverseLUnThreaded_VU();
 	#else
 	estimateAndInverseLUnThreaded_VU();
@@ -1813,7 +2230,7 @@ void JFAAcc::estimateAndInverseLThreaded_VU(unsigned long NUM_THREADS){
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 	unsigned long offset=_n_speakers/NUM_THREADS;
 	
-	double *N=_matN.getArray(); 
+	double *N=_N.getArray(); 
 	
 	unsigned long spkBottom = 0;
 	unsigned long spkUp=0;
@@ -1856,7 +2273,7 @@ void JFAAcc::estimateAndInverseLThreaded_VU(unsigned long NUM_THREADS){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateYandV(Config& config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateYandVThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateYandVThreaded(config.getParam("numThread").toULong());
 	else estimateYandVUnThreaded();
 	#else
 	estimateYandVUnThreaded();
@@ -1883,7 +2300,7 @@ void JFAAcc::estimateYandVUnThreaded(){	//estimate Y for all speakers and V
 				aux[spk*_rankEV+i] += f_x[spk*_svSize+k] * invVar[k] * v[i*_svSize+k];
 			}
 		}
-		
+	
 		//multiplication by invL
 		for(unsigned long i=0; i<_rankEV;i++){
 			for(unsigned long k=0; k<_rankEV; k++){
@@ -1933,6 +2350,35 @@ struct estimateYandVthread_data{
 	RefVector <DoubleSquareMatrix>* linv;
 };
 
+
+struct computeC_data{
+	double* tmpC;
+	double *Y;
+	double *F_X;
+	unsigned long numThread;
+	unsigned long spkBottom;
+	unsigned long spkUp;	
+	unsigned long rankEV;
+	unsigned long svSize;
+};
+
+
+struct computeINVLandA_data{
+	double *N;
+	double *Y;
+	unsigned long spk;
+	unsigned long _n_distrib;
+	unsigned long numThread;
+	unsigned long rankBottom;
+	unsigned long rankUp;	
+	unsigned long rankEV;
+	unsigned long svSize;
+	RefVector <DoubleSquareMatrix>* A;
+	RefVector <DoubleSquareMatrix>* linv;
+};
+
+
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 //				Thread Routine
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1968,6 +2414,65 @@ void *estimateYandVthread(void *threadarg) {
 		for(unsigned long i=0; i<_rankEV;i++){
 			for(unsigned long k=0; k<_rankEV; k++){
 				y[spk*_rankEV+i] += aux[spk*_rankEV+k] * invl[i*_rankEV+k];
+			}
+		}
+	}
+	pthread_exit((void*) 0);
+	return (void*)0 ;
+}
+
+
+void *computeC(void *threadarg){
+	
+	struct computeC_data *my_data;
+	my_data = (struct computeC_data *) threadarg;
+
+	unsigned long numThread = my_data->numThread;
+	double *tmpc = my_data->tmpC;
+	double *y = my_data->Y;
+	double *f_x = my_data->F_X;
+	unsigned long spkBottom = my_data->spkBottom;	
+	unsigned long spkUp = my_data->spkUp;
+	unsigned long _rankEV=my_data->rankEV;
+	unsigned long _svSize=my_data->svSize;
+	
+	//For each session
+	for(unsigned long spk= spkBottom; spk<spkUp; spk++){
+		for(unsigned long i=0;i<_rankEV;i++){
+			for(unsigned long j=0;j<_svSize;j++){
+				tmpc[(numThread*_rankEV+i)*_svSize+j] += y[spk*_rankEV+i] * f_x[spk*_svSize+j];
+			}
+		}
+	}
+	pthread_exit((void*) 0);
+	return (void*)0 ;
+}
+
+
+
+void *computeINVLandA(void *threadarg){
+
+	struct computeINVLandA_data *my_data;
+	my_data = (struct computeINVLandA_data *) threadarg;
+
+	double *n = my_data->N;
+	double *y = my_data->Y;
+	unsigned long spk = my_data->spk;
+	unsigned long _n_distrib = my_data->_n_distrib;
+	unsigned long rankBottom = my_data->rankBottom;	
+	unsigned long rankUp = my_data->rankUp;
+	unsigned long _rankEV=my_data->rankEV;
+
+	DoubleSquareMatrix &linv=(*(my_data->linv))[spk];
+	double *invl = linv.getArray();
+
+	for(unsigned long i= rankBottom; i<rankUp; i++){
+		for(unsigned long j=0;j<_rankEV;j++){
+			invl[i*_rankEV+j] += y[spk*_rankEV+i]*y[spk*_rankEV+j];
+			for(unsigned long dis = 0; dis<_n_distrib;dis++){
+				DoubleSquareMatrix &A=(*(my_data->A))[dis];
+				double *a = A.getArray();
+				a[i*_rankEV+j] += invl[i*_rankEV+j] * n[spk*_n_distrib+dis];
 			}
 		}
 	}
@@ -2043,30 +2548,124 @@ void JFAAcc::estimateYandVThreaded(unsigned long NUM_THREADS){
 	free(thread_data_array);
 	free(threads);
 	
-	for(unsigned long spk=0; spk<_n_speakers; spk++){
-		double *invl = _l_spk_inv[spk].getArray();
-		
-		for(unsigned long i=0;i<_rankEV;i++){
-			for(unsigned long j=0;j<_rankEV;j++){
-					invl[i*_rankEV+j] += y[spk*_rankEV+i]*y[spk*_rankEV+j];
-			}
-		}
 
-		for(unsigned long dis = 0; dis<_n_distrib;dis++){
-			for(unsigned long i=0;i<_rankEV;i++){
-				for(unsigned long j = 0;j<_rankEV;j++){
-					_Aev[dis](i,j) += invl[i*_rankEV+j] * n[spk*_n_distrib+dis];
+//*************************************************************************
+	//Create a temporary matrix in by concatenating C matrices
+	Matrix<double> _tmpC;
+	_tmpC.setDimensions(_rankEV*NUM_THREADS,_svSize);
 
-				}
-			}
-		}
+	//Initialize tmpC
+	_tmpC.setAllValues(0.0);
 
-		for(unsigned long i=0;i<_rankEV;i++){
-			for(unsigned long j=0;j<_svSize;j++){
-					c[i*_svSize+j] += y[spk*_rankEV+i] * f_x[spk*_svSize+j];
+	struct computeC_data *thread_data_array2 = new computeC_data[NUM_THREADS];
+	pthread_t *threads2 = new pthread_t[NUM_THREADS];
+
+	pthread_attr_t attr2;
+	pthread_attr_init(&attr2);
+	pthread_attr_setdetachstate(&attr2, PTHREAD_CREATE_JOINABLE);
+	unsigned long offset2=_n_speakers/NUM_THREADS;
+	
+	double *tmpc;
+	f_x=_F_X.getArray(); tmpc=_tmpC.getArray();
+	
+	spkBottom = 0;
+	spkUp=0;
+	re=_n_speakers - NUM_THREADS*offset2;
+
+	//Create threads
+	for(unsigned long t=0; t<NUM_THREADS; t++){
+		spkUp = spkBottom +offset2;
+		if(t<re) spkUp +=1;
+
+		thread_data_array2[t].Y=Y;
+		thread_data_array2[t].F_X = f_x;
+		thread_data_array2[t].numThread = t;
+		thread_data_array2[t].spkBottom = spkBottom;
+		thread_data_array2[t].spkUp = spkUp;	
+		thread_data_array2[t].rankEV = _rankEV;
+		thread_data_array2[t].svSize = _svSize;
+		thread_data_array2[t].tmpC = tmpc;
+
+		if (verboseLevel >1) cout<<"(AccumulateJFAStat) Compute C creating thread n [ "<< t<< " ] for speakers[ "<<spkBottom<<" --> "<<spkUp-1<<" ]"<<endl;
+			rc = pthread_create(&threads2[t], &attr2, computeC, (void *)&thread_data_array2[t]);
+		if (rc) throw Exception("ERROR; return code from pthread_create() is ",__FILE__,rc);
+
+		spkBottom = spkUp;
+	}
+	
+	pthread_attr_destroy(&attr2);
+	for(unsigned long t=0; t<NUM_THREADS; t++) {
+		rc = pthread_join(threads2[t], (void **)&status);
+		if (rc)  throw Exception("ERROR; return code from pthread_join() is ",__FILE__,rc);
+		if (verboseLevel>1) cout <<"(AccumulateJFAStat) Completed join with thread ["<<t<<"] status["<<status<<"]"<<endl;
+	}
+	
+	free(thread_data_array2);
+	free(threads2);
+
+	//Sum matrix C after multithreading
+	for(unsigned long mt=0; mt<NUM_THREADS;mt++){
+		for(unsigned long i=0; i<_rankEV;i++){
+			for(unsigned long j=0; j<_svSize;j++){
+				c[i*_svSize+j] += _tmpC(mt*_rankEV+i,j);
 			}
 		}
 	}
+
+
+///////////////////////////////////////////////////////////////////
+
+
+
+
+	for(unsigned long spk=0; spk<_n_speakers; spk++){
+
+		struct computeINVLandA_data *thread_data_array3 = new computeINVLandA_data[NUM_THREADS];
+		pthread_t *threads3 = new pthread_t[NUM_THREADS];
+
+		pthread_attr_t attr3;
+		pthread_attr_init(&attr3);
+		pthread_attr_setdetachstate(&attr3, PTHREAD_CREATE_JOINABLE);
+		unsigned long offset3=_rankEV/NUM_THREADS;
+
+		unsigned long rankBottom = 0;
+		unsigned long rankUp=0;
+		re=_rankEV - NUM_THREADS*offset3;
+
+		//Create threads
+		for(unsigned long t=0; t<NUM_THREADS; t++){
+			rankUp = rankBottom +offset3;
+			if(t<re) rankUp +=1;
+
+			thread_data_array3[t].N = n;
+			thread_data_array3[t].Y=Y;
+			thread_data_array3[t].spk = spk;
+			thread_data_array3[t]._n_distrib = _n_distrib;
+			thread_data_array3[t].numThread = t;
+			thread_data_array3[t].rankBottom = rankBottom;
+			thread_data_array3[t].rankUp = rankUp;	
+			thread_data_array3[t].rankEV = _rankEV;
+			thread_data_array3[t].svSize = _svSize;
+			thread_data_array3[t].A = &(_Aev);
+			thread_data_array3[t].linv=&(_l_spk_inv);
+
+			if (verboseLevel >2) cout<<"(AccumulateJFAStat) ComputeLinvandA creating thread n [ "<< t<< " ] for speakers[ "<<rankBottom<<" --> "<<rankUp-1<<" ]"<<endl;
+				rc = pthread_create(&threads3[t], &attr3, computeINVLandA, (void *)&thread_data_array3[t]);
+			if (rc) throw Exception("ERROR; return code from pthread_create() is ",__FILE__,rc);
+			rankBottom = rankUp;
+		}
+	
+		pthread_attr_destroy(&attr3);
+		for(unsigned long t=0; t<NUM_THREADS; t++) {
+			rc = pthread_join(threads3[t], (void **)&status);
+			if (rc)  throw Exception("ERROR; return code from pthread_join() is ",__FILE__,rc);
+			if (verboseLevel>2) cout <<"(AccumulateJFAStat) Completed join with thread ["<<t<<"] status["<<status<<"]"<<endl;
+		}
+	
+		free(thread_data_array3);
+		free(threads3);
+	}
+
 	if (verboseLevel >= 1) cout << "(AccumulateJFAStat) Done " << endl;
 }
 #endif
@@ -2074,7 +2673,7 @@ void JFAAcc::estimateYandVThreaded(unsigned long NUM_THREADS){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateY(Config& config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateYThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateYThreaded(config.getParam("numThread").toULong());
 	else estimateYUnThreaded();
 	#else
 	estimateYUnThreaded();
@@ -2247,7 +2846,7 @@ void JFAAcc::estimateYThreaded(unsigned long NUM_THREADS){
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateXandU(Config &config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateXandUThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateXandUThreaded(config.getParam("numThread").toULong());
 	else estimateXandUUnThreaded();
 	#else
 	estimateXandUUnThreaded();
@@ -2469,7 +3068,7 @@ void JFAAcc::estimateXandUThreaded(unsigned long NUM_THREADS){
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateX(Config &config){
 	#ifdef THREAD    
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	estimateXThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateXThreaded(config.getParam("numThread").toULong());
 	else estimateXUnThreaded();
 	#else
 	estimateXUnThreaded();
@@ -2635,7 +3234,6 @@ void JFAAcc::estimateXThreaded(unsigned long NUM_THREADS){
 }
 #endif
 
-
 //******************************************
 // AJOUT POUR LE LFA VERSION DRISS
 //******************************************
@@ -2643,7 +3241,7 @@ void JFAAcc::estimateXThreaded(unsigned long NUM_THREADS){
 void JFAAcc::estimateU(){	//estimate X for all sessions and U
 	
 	if (verboseLevel>=1) cout << "(AccumulateJFAStat) Compute U Estimate "<<endl;
-//	_matX.setAllValues(0.0);
+//	_X.setAllValues(0.0);
 	Matrix<double> AUX(_n_sessions,_rankEC);
 	AUX.setAllValues(0.0);
 	
@@ -2694,24 +3292,6 @@ void JFAAcc::estimateU(){	//estimate X for all sessions and U
 //******************************************
 // FIN D'AJOUT POUR LE LFA VERSION DRISS
 //******************************************
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 //----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::estimateZandD(){	//estimate Z and D
@@ -2810,7 +3390,7 @@ void JFAAcc::estimateZ(){	//estimate Z for all speakers during the training phas
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
-void JFAAcc::estimateZMAP(unsigned long tau){	//estimate Z for all speakers during the training phase
+void JFAAcc::estimateZMAP(double tau){	//estimate Z for all speakers during the training phase
 	
 	if (verboseLevel>=1) cout << "(AccumulateJFAStat) Compute Z MAP estimate during the training phase "<<endl;
 	_Z.setAllValues(0.0);
@@ -2825,7 +3405,6 @@ void JFAAcc::estimateZMAP(unsigned long tau){	//estimate Z for all speakers duri
 		for(unsigned long i=0; i<_n_distrib; i++){
 			for(unsigned long j=0; j<_vectSize; j++){
 				_Z(spk,i*_vectSize+j) = (tau/(tau + _matN(spk,i))) * _D[i*_vectSize+j] * _ubm_invvar[i*_vectSize+j] * _F_X(spk,i*_vectSize+j);
-
 			}
 		}
 	}
@@ -2840,10 +3419,10 @@ void JFAAcc::updateVestimate(){
 		DoubleSquareMatrix invA;
 		invA.setSize(_rankEV);
 		_Aev[d].invert(invA);
-		
+	
 		double *tmpc, * inva, *cev;
 		tmpc=tmpC.getArray(); inva=invA.getArray(); cev=_Cev.getArray();
-		
+	
 		for(unsigned long i=0; i<_rankEV;i++){
 			for(unsigned long j=0; j<_vectSize;j++){
 				for(unsigned long k=0; k<_rankEV;k++){
@@ -2971,6 +3550,21 @@ Matrix<double> JFAAcc::getYX(){
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void JFAAcc::saveX(String xFile,Config & config){
+	_matX.save(xFile,config);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void JFAAcc::saveY(String yFile,Config &config){
+	_Y.save(yFile,config);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void JFAAcc::saveZ(String xFile,Config &config){
+	_Z.save(xFile,config);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
 Matrix <double>& JFAAcc::getN() {
 	return _matN;
 }	
@@ -3017,7 +3611,7 @@ void JFAAcc::restoreAccs() {	// Restore Accumulators in temporary variables
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::substractMplusDZ(Config & config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	substractMplusDZThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	substractMplusDZThreaded(config.getParam("numThread").toULong());
 	else substractMplusDZUnThreaded();
 	#else
 	substractMplusDZUnThreaded();
@@ -3183,7 +3777,6 @@ void JFAAcc::substractMplusDZByChannel(){
 	while((pline=_fileList.getLine())!=NULL) {
 
 		DoubleVector MplusDZ; MplusDZ.setSize(_svSize); MplusDZ.setAllValues(0.0);
-		double *mplusdz=MplusDZ.getArray();
 
 		while((pFile=pline->getElement())!=NULL) {
 
@@ -3201,7 +3794,7 @@ void JFAAcc::substractMplusDZByChannel(){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::substractMplusVY(Config &config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	substractMplusVYThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	substractMplusVYThreaded(config.getParam("numThread").toULong());
 	else substractMplusVYUnThreaded();
 	#else
 	substractMplusVYUnThreaded();
@@ -3365,7 +3958,7 @@ void JFAAcc::substractMplusVYThreaded(unsigned long NUM_THREADS){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::substractUX(Config &config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	substractUXThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	substractUXThreaded(config.getParam("numThread").toULong());
 	else substractUXUnThreaded();
 	#else
 	substractUXUnThreaded();
@@ -3613,7 +4206,7 @@ void JFAAcc::substractMplusVUYX(){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::substractMplusVYplusDZ(Config &config){
 	#ifdef THREAD          
-	if (config.existsParam("numThread") && config.getParam("numThread").toLong() >0)	substractMplusVYplusDZThreaded(config.getParam("numThread").toLong());
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	substractMplusVYplusDZThreaded(config.getParam("numThread").toULong());
 	else substractMplusVYplusDZUnThreaded();
 	#else
 	substractMplusVYplusDZUnThreaded();
@@ -3636,11 +4229,9 @@ void JFAAcc::substractMplusVYplusDZUnThreaded(){
 
 	double *n_h=_N_h.getArray(); 
 	double *f_x_h=_F_X_h.getArray();
-
-
 	while((pline=_fileList.getLine())!=NULL) {
-
 		this->getMplusVYplusDZ(MplusVYplusDZ,spk);
+		
 		while((pFile=pline->getElement())!=NULL) {
 			for(unsigned long k=0;k<_n_distrib;k++){
 				for (unsigned long i=0;i<_vectSize;i++){ 
@@ -3850,7 +4441,7 @@ void JFAAcc::normalizeFeatures(SegCluster &selectedSegments,FeatureServer &fs,Co
 	
 	if (verbose) cout << "(AccumulateJFAStat) Normalize Features" << endl;	
 	//MixtureGD & clientMixture=_ms.getMixtureGD(1); 						// copy the UBM mixture
-	MixtureGD & world=_ms.getMixtureGD(0);
+//	MixtureGD & world=_ms.getMixtureGD(0);
 
 	MixtureGD & clientMixture=_ms.duplicateMixture (_ms.getMixtureGD(0), DUPL_DISTRIB);
 	
@@ -3883,10 +4474,9 @@ void JFAAcc::normalizeFeatures(SegCluster &selectedSegments,FeatureServer &fs,Co
 				DoubleVector P;
 				P.setSize(_n_distrib);
 				double *Prob=P.getArray();
-
-				//Compute occupation of the current frame on each distribution of the UBM
 				for(unsigned long k=0;k<_n_distrib;k++) {
 					Prob[k]=clientMixture.weight(k)*clientMixture.getDistrib(k).computeLK(f);
+					
 //					Prob[k]=world.weight(k)* world.getDistrib(k).computeLK(f);
 					sum+=Prob[k];
 				}
@@ -3922,6 +4512,84 @@ void JFAAcc::substractUXfromFeatures(FeatureServer &fs,Config &config){
 	SegCluster& selectedSegments=segmentsServer.getCluster(codeSelectedFrame);  
 	normalizeFeatures(selectedSegments,fs,config);
 };
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void JFAAcc::orthonormalizeV(){
+	// Gram-Schmidt algorithm
+/*
+[m,n] = size(B);
+Q=zeros(m,n);
+R=zeros(m,n);
+
+%Orthonormalisation de A
+for j=1:m
+    v=B(j,:);
+    for i=1:j-1
+        R(i,j)=Q(i,:)*B(j,:)';
+        v=v-R(i,j)*Q(i,:);
+    end
+    R(j,j)=norm(v);
+    if ( R(j,j) == 0 )
+        Q(j,:)=0;
+    else
+        Q(j,:)=v/R(j,j);
+    end;
+end*/
+
+	Matrix<double> Q,R;
+	Q.setDimensions(_rankEV, _svSize);
+	Q.setAllValues(0.0);
+	R.setDimensions(_rankEV, _svSize);
+	R.setAllValues(0.0);
+
+	for(unsigned long j=0;j<_rankEV;j++){
+
+		DoubleVector v(_svSize,_svSize);
+		for(unsigned long k=0; k<_svSize;k++){
+			v[k] = _V(j,k);
+		}
+		for(unsigned long i=0;i<j;i++){
+			//R(i,j)=Q(i,:)*B(j,:)';
+			for(unsigned long k=0; k<_svSize;k++){
+				R(i,j) += Q(i,k)*_V(j,k);
+			}
+			//v=v-R(i,j)*Q(i,:);
+			for(unsigned long k=0; k<_svSize;k++){
+				v[k] -= R(i,j)* Q(i,k);
+			}
+		}
+
+		//R(j,j)=norm(v);
+		double nV = 0;
+		for(unsigned long k=0; k<_svSize;k++){
+			nV += v[k]*v[k];
+		}
+		R(j,j) = sqrt(nV);
+
+		//if ( R(j,j) == 0 )
+		//    Q(j,:)=0;
+		//else
+		//    Q(j,:)=v/R(j,j);
+		//end;
+		if(R(j,j) ==0){
+			for(unsigned long k=0; k<_svSize;k++){
+				Q(j,k)=0;
+			}
+		}
+		else{
+			for(unsigned long k=0; k<_svSize;k++){
+				Q(j,k)= v[k]/R(j,j);
+			}
+		}
+	}
+
+	//Copy the new matrix in _V
+	for(unsigned long i=0;i<_rankEV;i++){
+		for(unsigned long j=0;j<_svSize;j++){
+			_V(i,j) = Q(i,j);
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 ///Save Accumulators on disk
@@ -3975,7 +4643,7 @@ void JFAAcc::verifyEMLK(Config& config){
 
 	double total=0.0;
 	unsigned long maxLLKcomputed=1;
-	maxLLKcomputed=config.getParam("computeLLK").toLong();	
+	maxLLKcomputed=config.getParam("computeLLK").toULong();	
 
 	unsigned long cnt=0;
 	while((pline=ndx.getLine())!=NULL && cnt < maxLLKcomputed) { 
@@ -3995,7 +4663,7 @@ void JFAAcc::verifyEMLK(Config& config){
 			unsigned long codeSelectedFrame=labelServer.getLabelIndexByString(config.getParam("labelSelectedFrames"));
 			SegCluster& selectedSegments=segmentsServer.getCluster(codeSelectedFrame);  
 			double llk=this->getLLK(selectedSegments,model,fs,config); 
-			if (verbose) cout << "(EigenVoice) LLK["<<*pFile<<"]="<<llk<<endl;
+			if (verboseLevel>1) cout << "(EigenVoice) LLK["<<*pFile<<"]="<<llk<<endl;
 			cnt++;
 			total+=llk;
 		}
