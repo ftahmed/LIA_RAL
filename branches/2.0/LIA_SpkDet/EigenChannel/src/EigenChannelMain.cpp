@@ -53,37 +53,37 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 */
 
 #include <iostream>
-#include <liatools.h>
-#include <EigenChannel.h>
 
-using namespace alize;
+#include "liatools.h"
+#include "EigenChannel.h"
+
 using namespace std;
+using namespace alize;
+
 
 int main(int argc, char* argv[]) {
 	ConfigChecker cc;
-	try {
+	try{
 		// Needed params
+		cc.addStringParam("eigenChannelMode",true,true,"compute eigenChannel matrix for JFA or LFA paradigm");
 		cc.addStringParam("ndxFilename",true,true,"NDX of multiple GMM speaker recordings");
 		cc.addStringParam("inputWorldFilename",true,true,"the world model file");
-		cc.addIntegerParam("nbIt",true,true,"number of ml it");	
+		cc.addIntegerParam("nbIt",true,true,"number of ml it");
+		cc.addBooleanParam("loadInitChannelMatrix",true,true,"save initialisation EigenVoice Matrix");	
+		cc.addStringParam("eigenChannelMatrix",true,true,"filename to save EigenVoice Matrix ");					
+		cc.addIntegerParam("eigenChannelRank",false,true,"final rank of EigenVoice matrix");
 		cc.addStringParam("saveMatrixFormat",true,true,"matrix format: DB (binary) or DT (ascii)");		  
 		cc.addStringParam("loadMatrixFormat",true,true,"matrix format: DB (binary) or DT (ascii)");				
+
 		// Optionnal
-		cc.addBooleanParam("loadAccs",false,true,"if true do not compute UBM stats, load matrices");		
-		cc.addIntegerParam("computeLLK",false,true,"optional: nb of files where LLK is computed");	
-		cc.addStringParam("initChannelMatrix",false,true,"init Channel Matrix (DM compatibility)");	
-		cc.addIntegerParam("channelMatrixRank",false,true,"final rank of channel matrix (DM compatibility)");	
-		cc.addFloatParam("regulationFactor",false,true,"map tau (DM compatibility)");
-		cc.addStringParam("initEigenChannelMatrix",false,true,"init EigenChannel Matrix if not loaded");
-		cc.addStringParam("loadInitChannelMatrix",false,true,"filename to load init Matrix ");	
-		cc.addStringParam("eigenChannelMatrix",false,true,"filename to save EigenVoice Matrix ");					
-		cc.addIntegerParam("eigenChannelRank",false,true,"final rank of EigenVoice matrix");
-		cc.addStringParam("eigenChannelMode",false,true,"compute eigenChannel matrix for JFA or LFA paradigm WARNING if not set call DM version");
-		cc.addStringParam("channelMatrix",false,true,"filename to save Channel Matrix ");					
-		cc.addStringParam("eigenVoiceMatrix",false,true,"name of the EigenVoice Matrix");
+		cc.addStringParam("initEigenChannelMatrix",false,true,"init EigenChannel Matrix");
+		cc.addStringParam("eigenVoiceMatrix",false,true,"nem of the EigenVoice Matrix");
+		cc.addBooleanParam("loadAccs",false,true,"if true do not compute UBM stats, load matrices");
 		cc.addBooleanParam("checkLLK",false,true,"if true do compute the likelihood of training data after each iteration");
 		cc.addBooleanParam("saveInitChannelMatrix",false,true,"if true save the matrix used for initialisation");
 		cc.addBooleanParam("saveAllECMatrices",false,true,"if true save the matrices after each iteration");
+		cc.addIntegerParam("computeLLK",false,true,"optional: nb of files where LLK is computed");	
+		
 
 		// Insertion of config compatibility rules
 		CmdLine cmdLine(argc, argv);
@@ -92,13 +92,13 @@ int main(int argc, char* argv[]) {
 			cout << "********** EigenChannel.exe ************" << endl;
 			cout << "****************************************" << endl;
 			cout << endl;
-			cout << "Evaluate Channel Matrix from speakers data" << endl;
-	  	   cout <<endl<<cc.getParamList()<<endl;
-       	 return 0;  
-	      }
-      	if (cmdLine.displayVersionRequired()){
-      	  cout <<"Version 2.0 ALIZE Package"<<endl;
-      	} 
+			cout << "Evaluate EigenChannel Matrix from sessions data" << endl;
+			cout <<endl<<cc.getParamList()<<endl;
+			return 0;  
+		}
+		if (cmdLine.displayVersionRequired()){
+		cout <<"Version 2.0 ALIZE Package"<<endl;
+		} 
 
 		Config tmp;
 		cmdLine.copyIntoConfig (tmp);
@@ -111,11 +111,10 @@ int main(int argc, char* argv[]) {
 		if (verbose) verboseLevel=1;else verboseLevel=0;
 		if (config.existsParam("verboseLevel"))verboseLevel=config.getParam("verboseLevel").toLong();
 		if (verboseLevel>0) verbose=true;		
-		if (cmdLine.displayHelpRequired()) {cout << cc.getParamList() << endl;}	
+		if (cmdLine.displayHelpRequired()) {cout << cc.getParamList() << endl;} 
 
 		if(config.getParam("eigenChannelMode") == "JFA")		EigenChannelJFA(config);
 		else if(config.getParam("eigenChannelMode") == "LFA")	EigenChannelLFA(config);
-		else if(config.getParam("eigenChannelMode") == "")	EigenChannel(config);
 		else{
 			cout<<"Error : wrong eigenChannelMode parameter, please chose JFA or LFA"<<endl;
 		}
