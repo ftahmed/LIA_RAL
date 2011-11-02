@@ -65,10 +65,14 @@ using namespace std;
 // could output a list with the selected files for a defined quantity of data
 // Uses the same input file than traintarget and output a new list
 int InfoTarget(Config& config);
+
 int TrainTarget(alize::Config&);
 int TrainTargetFA(alize::Config&);
 int TrainTargetLFA(alize::Config&);
-int TrainTargetJFA(alize::Config&);
-int TrainTargetByLabel(alize::Config&);
 
+int TrainTargetJFA(alize::Config&);
+
+//int TrainTargetIVector(alize::Config&);
+
+int TrainTargetByLabel(alize::Config&);
 #endif // !defined(TrainTarget)
