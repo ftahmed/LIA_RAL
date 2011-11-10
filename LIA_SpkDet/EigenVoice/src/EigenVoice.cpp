@@ -133,19 +133,20 @@ int EigenVoice(Config & config){
 
 		//On update Y pour tous les locuteurs
 		jfaAcc.estimateYandV(config);
+		
+		if (_checkLLK) jfaAcc.verifyEMLK(config);
 
 		//Update _V
 		jfaAcc.updateVestimate();
 
-		if (_checkLLK) jfaAcc.verifyEMLK(config);
-
 		//If the option is on, orthonormalize the matrix V
-		if(config.getParam("orthonormalizeV").toBool()){
+		if(config.existsParam("orthonormalizeV") && (config.getParam("orthonormalizeV").toBool())){
 			if(verboseLevel > 0) cerr<<"Orthonormalize EV matrix"<<endl;
 			jfaAcc.orthonormalizeV();
 		}
 
 		//Reinitialise the accumulators
+		jfaAcc.resetTmpAcc("EigenVoice");
 		jfaAcc.restoreAccs();
 
 		//Save the V matrix at the end of the iteration
