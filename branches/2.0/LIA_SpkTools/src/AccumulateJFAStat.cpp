@@ -257,6 +257,7 @@ void JFAAcc::_init(XList &ndx, Config &config){
 		_uEuT.addObject(*new DoubleSquareMatrix(_rankEC));
 		_uEuT[s].setAllValues(0.0);
 	}
+
 	for(unsigned long s =0; s<_n_distrib; s++){
 		_vuEvuT.addObject(*new DoubleSquareMatrix(_rankEV + _rankEC));
 		_vuEvuT[s].setAllValues(0.0);
@@ -653,14 +654,13 @@ void JFAAcc::resetAcc(){
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void JFAAcc::resetTmpAcc(){
-	
 	_Cev.setAllValues(0.0);
 	_Cec.setAllValues(0.0);
 	///Reinitialise accumulators for L matrices computation
 	for(unsigned long s =0; s<_n_distrib; s++){
 		_vEvT[s].setAllValues(0.0);
 		_uEuT[s].setAllValues(0.0);
-		
+
 		_Aev[s].setAllValues(0.0);
 		_Aec[s].setAllValues(0.0);
 	}
