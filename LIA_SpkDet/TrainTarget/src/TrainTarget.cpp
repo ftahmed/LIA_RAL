@@ -630,8 +630,8 @@ try{
 			if(config.existsParam("saveZ"))			saveZ = config.getParam("saveZ").toBool();
 			String xExtension = ".x"; String yExtension = ".y"; String zExtension = ".z";
 			if(config.existsParam("xExtension"))	xExtension = config.getParam("xExtension");
-			if(config.existsParam("yExtension"))	xExtension = config.getParam("yExtension");
-			if(config.existsParam("zExtension"))	xExtension = config.getParam("zExtension");
+			if(config.existsParam("yExtension"))	yExtension = config.getParam("yExtension");
+			if(config.existsParam("zExtension"))	zExtension = config.getParam("zExtension");
 
 			jfaAcc.getVYplusDZ(clientSV, 0);
 			jfaAcc.getMplusVYplusDZ(clientModel, 0);
