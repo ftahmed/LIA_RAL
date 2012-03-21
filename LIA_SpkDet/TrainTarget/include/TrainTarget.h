@@ -86,4 +86,3 @@ int TrainTargetByLabel(alize::Config&);
 
 
 
-#endif // !defined(TrainTarget)
