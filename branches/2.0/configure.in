@@ -1,7 +1,7 @@
 AC_INIT([LIA_RAL], [2.0], [dev-alize@listes.univ-avignon.fr])
 AM_INIT_AUTOMAKE(LIA_RAL,2.0)
 
-ALIZE_PATH=/Users/christophe_levy/Documents/src/ALIZE_2.0/
+ALIZE_PATH=/home/antho/I2R/Sources/C++/2011_11_02_SOURCE_SVN/ALIZE/
                     
 # Checks for programs.
 AC_PROG_CXX
@@ -93,6 +93,8 @@ AC_OUTPUT([LIA_SpkTools/Makefile
                  LIA_SpkDet/ShiftedDeltaFeat/src/Makefile
                  LIA_SpkDet/SpkAdapt/Makefile
                  LIA_SpkDet/SpkAdapt/src/Makefile
+                 LIA_SpkDet/TotalVariability/Makefile
+                 LIA_SpkDet/TotalVariability/src/Makefile
                  LIA_SpkDet/TrainTarget/Makefile
                  LIA_SpkDet/TrainTarget/src/Makefile
                  LIA_Utils/Makefile
