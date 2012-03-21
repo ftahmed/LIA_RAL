@@ -1461,7 +1461,7 @@ void TVAcc::substractM(Config & config){
 	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	substractMThreaded(config.getParam("numThread").toULong());
 	else substractMUnThreaded();
 	#else
-	substractMplusDZUnThreaded();
+	substractMUnThreaded();
 	#endif
 }
 
@@ -2355,7 +2355,7 @@ void TVAcc::estimateY(Config& config){
 	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0)	estimateYThreaded(config.getParam("numThread").toULong());
 	else estimateYUnThreaded(config);
 	#else
-	estimateYUnthreaded(config);
+	estimateYUnThreaded(config);
 	#endif
 }
 
