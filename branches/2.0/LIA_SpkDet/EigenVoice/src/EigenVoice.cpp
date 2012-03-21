@@ -79,7 +79,7 @@ int EigenVoice(Config & config){
 	//Option used to check the Likelihood at each iteration
 	bool _checkLLK = false;
 	if (config.existsParam("checkLLK")) _checkLLK= config.getParam("checkLLK").toBool();
-	else if (verboseLevel >=1) _checkLLK= true;
+	else if (verboseLevel >2) _checkLLK= true;
 
 	//Statistics
 	if((config.existsParam("loadAccs")) && config.getParam("loadAccs").toBool()){	//load pre-computed statistics
@@ -185,7 +185,7 @@ int IVector(Config & config){
 	//Option used to check the Likelihood at each iteration
 	bool _checkLLK = false;
 	if (config.existsParam("checkLLK")) _checkLLK= config.getParam("checkLLK").toBool();
-	else if (verboseLevel >=1) _checkLLK= true;
+	else if (verboseLevel >2) _checkLLK= true;
 
 	//Statistics
 	if((config.existsParam("loadAccs")) && config.getParam("loadAccs").toBool()){	//load pre-computed statistics
