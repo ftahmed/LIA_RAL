@@ -61,7 +61,6 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 using namespace alize;
 using namespace std;
 
-int EigenChannel(Config &);
 int EigenChannelJFA(Config &);
 int EigenChannelLFA(Config &);
 
