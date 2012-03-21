@@ -133,7 +133,7 @@ int EigenVoice(Config & config){
 
 		//On update Y pour tous les locuteurs
 		jfaAcc.estimateYandV(config);
-		
+
 		if (_checkLLK) jfaAcc.verifyEMLK(config);
 
 		//Update _V
@@ -184,8 +184,6 @@ int IVector(Config & config){
 
 	//Option used to check the Likelihood at each iteration
 	bool _checkLLK = false;
-	if (config.existsParam("checkLLK")) _checkLLK= config.getParam("checkLLK").toBool();
-	else if (verboseLevel >2) _checkLLK= true;
 
 	//Statistics
 	if((config.existsParam("loadAccs")) && config.getParam("loadAccs").toBool()){	//load pre-computed statistics
@@ -240,10 +238,10 @@ int IVector(Config & config){
 		//On update Y pour tous les locuteurs
 		jfaAcc.estimateYandV(config);
 
+		if (config.existsParam("checkLLK")) jfaAcc.verifyEMLK(config);
+
 		//Update _V
 		jfaAcc.updateVestimate();
-
-		if (_checkLLK) jfaAcc.verifyEMLK(config);
 
 		//If the option is on, orthonormalize the matrix V
 		if(config.getParam("orthonormalizeV").toBool()){
@@ -254,6 +252,7 @@ int IVector(Config & config){
 		//Reinitialise the accumulators
 		jfaAcc.resetTmpAcc("iv");
 		jfaAcc.restoreAccs();
+
 		//Save the V matrix at the end of the iteration
 		bool saveAllEVMatrices = false;
 		if(config.existsParam("saveAllEVMatrices")) saveAllEVMatrices=config.getParam("saveAllEVMatrices").toBool();
