@@ -1633,7 +1633,7 @@ int ComputeTestIV(Config& config){
 		double *_s;
 		bool *_t;
 		Matrix<double> _S(pldaTest.getScores());
-		Matrix<bool> Trials(pldaTest.getTrials());
+		BoolMatrix Trials(pldaTest.getTrials());
 		_s = _S.getArray();
 		_t = Trials.getArray();
 
