@@ -55,27 +55,68 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 #include <iostream>
 #include <alize.h>
 #include <liatools.h>
-
 #include <PLDA.h>
 
 using namespace alize;
 using namespace std;
 
 int main(int argc, char* argv[]) {
-	ConfigChecker cc;
+	ConfigChecker initCc,cc;
+
 	try{
-		// Needed params
-		cc.addStringParam("pldaNdxFilename",true,true,"NDX of multiple GMM speaker recordings");
-		cc.addStringParam("loadVectorFilesPath",true,true,"directory of vectors to load");
-		cc.addStringParam("vectorFilesExtension",true,true,"extension of vector files");
-
-// TO DO: Add dimensions of PLDA matrices F, G
-
-		cc.addIntegerParam("pldaNbIt",true,true,"number of EM it");	
-
 		// Insertion of config compatibility rules
 		CmdLine cmdLine(argc, argv);
 
+		// Needed params
+		initCc.addStringParam("pldaNdxFilename",true,true,"NDX of multiple GMM speaker recordings");
+		initCc.addStringParam("loadVectorFilesPath",true,true,"directory of vectors to load");
+		initCc.addStringParam("loadMatrixFormat",true,true,"format of matrices to load, DB for binary, DT for ASCII");
+		initCc.addStringParam("saveMatrixFormat",true,true,"format of matrices to save, DB for binary, DT for ASCII");
+		initCc.addStringParam("matrixFilesPath",true,true,"directory to store matrices");
+		initCc.addStringParam("saveMatrixFilesExtension",true,true,"extension of matrix files to save");
+		initCc.addStringParam("vectorFilesExtension",true,true,"extension of vector files");
+		initCc.addIntegerParam("pldaEigenVoiceNumber",true,true,"Rank of the EigenVoice matrix");
+		initCc.addIntegerParam("pldaEigenChannelNumber",true,true,"Rank of the EigenChannel matrix");
+		initCc.addIntegerParam("pldaNbIt",true,true,"number of EM it");	
+		initCc.addBooleanParam("pldaLoadInitMatrices",true,true,"If true, load existing initialization matrices");
+		
+		// Check existing parameters to create the appropriate ConfigChecker
+		Config tmpConfig;
+		cmdLine.copyIntoConfig(tmpConfig);
+		Config initConfig;
+		if (tmpConfig.existsParam("config")) initConfig.load(tmpConfig.getParam("config"));
+
+		if (cmdLine.displayHelpRequired()){
+			cout << "****************************************" << endl;
+			cout << "********** PLDA.exe ************" << endl;
+			cout << "****************************************" << endl;
+			cout << endl;
+			cout << "Estimate PLDA model from development data" << endl;
+			cout <<endl<<initCc.getParamList()<<endl;
+			return 0;  
+		}
+
+		cmdLine.copyIntoConfig(initConfig);
+		initCc.check(initConfig);
+
+		// If initialize matrices from scratch
+		if(initConfig.getParam("pldaLoadInitMatrices").toBool()){
+			cc.addStringParam("pldaEigenVoiceMatrixInit",true,true,"file name of the EigenVoice matrix to load for initialization");
+			cc.addStringParam("pldaEigenChannelMatrixInit",true,true,"file name of the EigenChannel matrix to load for initialization");
+			cc.addStringParam("pldaSigmaMatrixInit",true,true,"file name of the noise matrix to load for initialization");
+			cc.addStringParam("pldaMeanVecInit",true,true,"file name of the mean vector to load for initialization");	
+			cc.addStringParam("loadMatrixFilesExtension",true,true,"extension of matrix files to load");
+		}
+		else{	// If load matrices from existing files
+			cc.addStringParam("randomInitLaw",true,true,"random law to use for matrices initialization");
+		}
+
+		cc.addStringParam("pldaOriginalMean",false,true,"file name of the mean vector to save");
+		cc.addStringParam("pldaEigenVoiceMatrix",false,true,"file name of the EigenVoice matrix to save");
+		cc.addStringParam("pldaEigenChannelMatrix",false,true,"file name of the EigenChannel matrix to save");
+		cc.addStringParam("pldaSigmaMatrix",false,true,"file name of the noise matrix of the noise matrix to save");
+		cc.addStringParam("pldaMinDivMean",false,true,"file name of the mean estimate after minimum divergence");
+		
 		if (cmdLine.displayHelpRequired()){
 			cout << "****************************************" << endl;
 			cout << "********** PLDA.exe ************" << endl;
@@ -85,9 +126,6 @@ int main(int argc, char* argv[]) {
 			cout <<endl<<cc.getParamList()<<endl;
 			return 0;  
 		}
-		if (cmdLine.displayVersionRequired()){
-			cout <<"Version 2.0 ALIZE Package"<<endl;
-		} 
 
 		Config tmp;
 		cmdLine.copyIntoConfig (tmp);
@@ -95,7 +133,9 @@ int main(int argc, char* argv[]) {
 		if (tmp.existsParam("config")) config.load(tmp.getParam("config"));
 		cmdLine.copyIntoConfig(config);
 		cc.check(config);
-		debug=config.getParam_debug();	
+
+		debug=config.getParam_debug();
+
 		if (config.existsParam("verbose"))verbose=config.getParam("verbose").toBool();else verbose=false;
 		if (verbose) verboseLevel=1;else verboseLevel=0;
 		if (config.existsParam("verboseLevel"))verboseLevel=config.getParam("verboseLevel").toLong();
@@ -103,7 +143,6 @@ int main(int argc, char* argv[]) {
 		if (cmdLine.displayHelpRequired()) {cout << cc.getParamList() << endl;}	
 
 		PLDA(config);
-
 	}
 	catch (Exception& e) {cout << e.toString() << cc.getParamList() << endl;}
 if (debug) {
