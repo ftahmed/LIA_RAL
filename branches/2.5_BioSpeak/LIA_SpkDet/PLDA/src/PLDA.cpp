@@ -73,28 +73,28 @@ using namespace Eigen;
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 int PLDA(Config & config){
 
-// TO DO: ajouter normalization des donnees de dev si on veut normaliser
+	try {
+		if(verboseLevel>0) cout<<"(PLDA) Model Training"<<endl;
 
+		// Create and initialize the PLDA Model in training mode
+		PldaModel plda("train",config);
 
-	if(verboseLevel>0) cout<<"(PLDA) Model Training"<<endl;
+		// Center data
+		plda.updateMean();
+		plda.centerData();
 
-	// Create and initialize the PLDA Model in training mode
-	PldaModel plda("train",config);
+		// EM iterations
+		unsigned long nbIt = config.getParam("pldaNbIt").toULong();
+		for(unsigned long it=0;it<nbIt;it++){
+			if(verboseLevel>0) cout<<"(PLDA)	EM iteration [ "<<it<<" ]"<<endl;
+			plda.em_iteration(config);
+		}
 
-	// Center data
-	plda.updateMean();
-	plda.centerData();
-
-	// EM iterations
-	unsigned long nbIt = config.getParam("pldaNbIt").toULong();
-	for(unsigned long it=0;it<nbIt;it++){
-		if(verboseLevel>0) cout<<"(PLDA)	EM iteration [ "<<it<<" ]"<<endl;
-		plda.em_iteration(config);
+		// Save PLDA model (for the time being, save the matrices separately)
+		if(verboseLevel>0) cout<<"(PLDA) Save PLDA model"<<endl;
+		plda.saveModel(config);
 	}
-
-	// Save PLDA model (for the time being, save the matrices separately)
-	if(verboseLevel>0) cout<<"(PLDA) Save PLDA model"<<endl;
-	plda.saveModel(config);
+	catch (Exception& e) {cout << e.toString().c_str() << endl;}
 
 return 0;
 }
