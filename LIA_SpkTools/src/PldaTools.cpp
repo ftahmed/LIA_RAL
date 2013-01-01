@@ -125,6 +125,7 @@ PldaDev::PldaDev(String & ndxFilename,Config & config){
 	_mean.setAllValues(0.0);
 
 	_speaker_means.setDimensions(_vectSize,_n_speakers);
+
 	_speaker_means.setAllValues(0.0);
 
 	_class.setSize(_n_sessions);
@@ -141,7 +142,7 @@ PldaDev::PldaDev(String & ndxFilename,Config & config){
 	data = _data.getArray();
 
 	speaker_mean = _speaker_means.getArray();
-		
+
 	while ((linep=_fileList.getLine()) != NULL){
 
 		if(verboseLevel>0) cout<<"	Load class [ "<<LCounter+1<<" / "<<_n_speakers<<" ]"<<endl; 
@@ -1667,6 +1668,7 @@ PldaModel::PldaModel(String mode, Config &config){
 	if(mode == "train"){
 		//Read the NDX file
 		String ndxFilename = config.getParam("pldaNdxFilename");
+
 		PldaDev dev(ndxFilename, config);
 		initTrain(dev, config);
 	}
@@ -1678,96 +1680,99 @@ PldaModel::PldaModel(String mode, Config &config){
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void PldaModel::initTrain(PldaDev dev,Config &config){
 
-	_rankF		= config.getParam("pldaEigenVoiceNumber").toULong();
-	_rankG		= config.getParam("pldaEigenChannelNumber").toULong();
+	 try {
+		_rankF		= config.getParam("pldaEigenVoiceNumber").toULong();
+		_rankG		= config.getParam("pldaEigenChannelNumber").toULong();
 
-	//Initialize accumulators
-	_Dev = dev;
-	_vectSize	= _Dev.getVectSize();
+		//Initialize accumulators
+		_Dev = dev;
+		_vectSize	= _Dev.getVectSize();
 
-	_Eh			= Eigen::MatrixXd::Zero(1,_Dev.getSpeakerNumber());
-	_EhhSum		= Eigen::MatrixXd::Zero(_rankF+_rankG,_rankF+_rankG);
-	_xhSum		= Eigen::MatrixXd::Zero(_vectSize,_rankF+_rankG);
-	_U			= Eigen::MatrixXd::Zero(_rankF+_rankG,1);
+		_Eh			= Eigen::MatrixXd::Zero(1,_Dev.getSpeakerNumber());
+		_EhhSum		= Eigen::MatrixXd::Zero(_rankF+_rankG,_rankF+_rankG);
+		_xhSum		= Eigen::MatrixXd::Zero(_vectSize,_rankF+_rankG);
+		_U			= Eigen::MatrixXd::Zero(_rankF+_rankG,1);
 
 
-	// Store Mean of the original data
-	_originalMean	= Eigen::VectorXd::Zero(_vectSize);
-	_sigmaObs		= Eigen::MatrixXd::Zero(_vectSize,_vectSize);
-	_Delta			= Eigen::VectorXd::Zero(_vectSize);
+		// Store Mean of the original data
+		_originalMean	= Eigen::VectorXd::Zero(_vectSize);
+		_sigmaObs		= Eigen::MatrixXd::Zero(_vectSize,_vectSize);
+		_Delta			= Eigen::VectorXd::Zero(_vectSize);
 
-	// Initialize temporary accumulators
-	_invSigma.resize(_vectSize,_vectSize);
-	_Ftweight.resize(_rankF, _vectSize);
-	_Gtweight.resize(_rankG,_vectSize);
-	_GtweightG.resize(_rankG,_rankG);
-	_FtweightG.resize(_rankF, _rankG);
-	_invGtweightGplusEye.resize(_rankG,_rankG);
+		// Initialize temporary accumulators
+		_invSigma.resize(_vectSize,_vectSize);
+		_Ftweight.resize(_rankF, _vectSize);
+		_Gtweight.resize(_rankG,_vectSize);
+		_GtweightG.resize(_rankG,_rankG);
+		_FtweightG.resize(_rankF, _rankG);
+		_invGtweightGplusEye.resize(_rankG,_rankG);
 
-	// Load matrices
-	String tmpF,tmpG,tmpSigma,tmpMeanVec;
+		// Load matrices
+		String tmpF,tmpG,tmpSigma,tmpMeanVec;
 
-// MODIFIER LES OPTIONS POUR SEPARER  eigenVoiceMatrix ET loadPldaMatrices (PAREIL POUR eigenChannel)
-	
-	//if EigenVoice matrix exists, load
-	if(config.existsParam("eigenVoiceMatrixInit")){
-		Matrix<double> F;
-		tmpF		= config.getParam("matrixFilesPath")+config.getParam("eigenVoiceMatrixInit")+config.getParam("loadMatrixFilesExtension");
-		if(verbose) cout<<"PldaModel load EigenVoiceMatrix from	[ "<<tmpF<<" ]"<<endl;
- 		F.load(tmpF,config);
-		_F.resize(_vectSize,_rankF);
-		for(unsigned long i=0;i<F.rows();i++)
-			for(unsigned long j=0;j<F.cols();j++)
-				_F(i,j) = F(i,j);
-	}
-	else{		// if this matrix doesn't exists, then initialize randomly
-		initF(config);
-	}
-
-	if(config.existsParam("eigenChannelMatrixInit")){
-		Matrix<double> G;
-		tmpG		= config.getParam("matrixFilesPath")+config.getParam("eigenChannelMatrixInit")+config.getParam("loadMatrixFilesExtension");
-		if(verbose) cout<<"PldaModel load EigenChannelMatrix from	[ "<<tmpG<<" ]"<<endl;
-		G.load(tmpG,config);
-		_G.resize(_vectSize,_rankG);
-		for(unsigned long i=0;i<G.rows();i++)
-			for(unsigned long j=0;j<G.cols();j++)
-				_G(i,j) = G(i,j);
-	}
-	else{		// if this matrix doesn't exists, then initialize randomly
-		initG(config);
-	}
-
-	if(config.existsParam("sigmaMatrixInit")){
-		tmpSigma	= config.getParam("matrixFilesPath")+config.getParam("sigmaMatrixInit")+config.getParam("loadMatrixFilesExtension");
-		Matrix<double> TS(tmpSigma,config);
-		_Sigma.resize(_vectSize,_vectSize);
-		if(verbose) cout<<"PldaModel load Precision Matrix from	[ "<<tmpSigma<<" ]"<<endl;
-		if((TS.rows() == _vectSize)&&(TS.cols()==_vectSize)){
-			for(unsigned long i=0;i<_vectSize;i++)
-				for(unsigned long j=0;j<_vectSize;j++)
-					_Sigma(i,j) = TS(i,j);
+	// MODIFIER LES OPTIONS POUR SEPARER  eigenVoiceMatrix ET loadPldaMatrices (PAREIL POUR eigenChannel)
+cerr<<"test load matrices"<<endl;
+		//if EigenVoice matrix exists, load
+		if(config.getParam("pldaLoadInitMatrices").toBool() && config.existsParam("pldaEigenVoiceMatrixInit")){
+			Matrix<double> F;
+			tmpF		= config.getParam("matrixFilesPath")+config.getParam("pldaEigenVoiceMatrixInit")+config.getParam("loadMatrixFilesExtension");
+			if(verbose) cout<<"PldaModel load EigenVoiceMatrix from	[ "<<tmpF<<" ]"<<endl;
+ 			F.load(tmpF,config);
+			_F.resize(_vectSize,_rankF);
+			for(unsigned long i=0;i<F.rows();i++)
+				for(unsigned long j=0;j<F.cols();j++)
+					_F(i,j) = F(i,j);
 		}
-	}
-	else{		// Initialize _Sigma to identity matrix
-		_Sigma = Eigen::MatrixXd::Identity(_vectSize,_vectSize);
-	}
+		else{		// if this matrix doesn't exists, then initialize randomly
+			initF(config);
+		}
 
-	if(config.existsParam("meanVecInit")){
-		tmpMeanVec	= config.getParam("matrixFilesPath")+config.getParam("meanVecInit")+config.getParam("loadMatrixFilesExtension");
-		Matrix<double> tM(tmpMeanVec,config);
-		_originalMean.resize(_vectSize);
-		if(verbose) cout<<"PldaModel load Mean Vector from	[ "<<tmpMeanVec<<" ]"<<endl;
-		for(unsigned long i=0;i<_vectSize;i++)
-			_originalMean(i) = tM(i,0);
-	}
-	else{		// Initialize _originalMean to mean of pldaDev data
-		RealVector<double> tM;
-		tM = _Dev.getMean();
-		_originalMean.resize(_vectSize);
-		for(unsigned long i=0;i<_vectSize;i++)
-			_originalMean(i) = tM[i];
-	}
+		if(config.getParam("pldaLoadInitMatrices").toBool() && config.existsParam("eigenChannelMatrixInit")){
+			Matrix<double> G;
+			tmpG		= config.getParam("matrixFilesPath")+config.getParam("eigenChannelMatrixInit")+config.getParam("loadMatrixFilesExtension");
+			if(verbose) cout<<"PldaModel load EigenChannelMatrix from	[ "<<tmpG<<" ]"<<endl;
+			G.load(tmpG,config);
+			_G.resize(_vectSize,_rankG);
+			for(unsigned long i=0;i<G.rows();i++)
+				for(unsigned long j=0;j<G.cols();j++)
+					_G(i,j) = G(i,j);
+		}
+		else{		// if this matrix doesn't exists, then initialize randomly
+			initG(config);
+		}
+
+		if(config.getParam("pldaLoadInitMatrices").toBool() && config.existsParam("sigmaMatrixInit")){
+			tmpSigma	= config.getParam("matrixFilesPath")+config.getParam("sigmaMatrixInit")+config.getParam("loadMatrixFilesExtension");
+			Matrix<double> TS(tmpSigma,config);
+			_Sigma.resize(_vectSize,_vectSize);
+			if(verbose) cout<<"PldaModel load Precision Matrix from	[ "<<tmpSigma<<" ]"<<endl;
+			if((TS.rows() == _vectSize)&&(TS.cols()==_vectSize)){
+				for(unsigned long i=0;i<_vectSize;i++)
+					for(unsigned long j=0;j<_vectSize;j++)
+						_Sigma(i,j) = TS(i,j);
+			}
+		}
+		else{		// Initialize _Sigma to identity matrix
+			_Sigma = Eigen::MatrixXd::Identity(_vectSize,_vectSize);
+		}
+
+		if(config.getParam("pldaLoadInitMatrices").toBool() && config.existsParam("meanVecInit")){
+			tmpMeanVec	= config.getParam("matrixFilesPath")+config.getParam("meanVecInit")+config.getParam("loadMatrixFilesExtension");
+			Matrix<double> tM(tmpMeanVec,config);
+			_originalMean.resize(_vectSize);
+			if(verbose) cout<<"PldaModel load Mean Vector from	[ "<<tmpMeanVec<<" ]"<<endl;
+			for(unsigned long i=0;i<_vectSize;i++)
+				_originalMean(i) = tM(i,0);
+		}
+		else{		// Initialize _originalMean to mean of pldaDev data
+			RealVector<double> tM;
+			tM = _Dev.getMean();
+			_originalMean.resize(_vectSize);
+			for(unsigned long i=0;i<_vectSize;i++)
+				_originalMean(i) = tM[i];
+		}
+	}	// end try
+	catch (Exception& e) {cout << e.toString().c_str() << endl;}
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3028,7 +3033,7 @@ Matrix<double> PldaTest::getScores(){
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
-Matrix<bool> PldaTest::getTrials(){
+BoolMatrix PldaTest::getTrials(){
 	return _trials;
 }
 
