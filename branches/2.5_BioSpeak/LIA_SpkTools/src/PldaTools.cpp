@@ -1711,7 +1711,7 @@ void PldaModel::initTrain(PldaDev dev,Config &config){
 		String tmpF,tmpG,tmpSigma,tmpMeanVec;
 
 	// MODIFIER LES OPTIONS POUR SEPARER  eigenVoiceMatrix ET loadPldaMatrices (PAREIL POUR eigenChannel)
-cerr<<"test load matrices"<<endl;
+
 		//if EigenVoice matrix exists, load
 		if(config.getParam("pldaLoadInitMatrices").toBool() && config.existsParam("pldaEigenVoiceMatrixInit")){
 			Matrix<double> F;
@@ -1828,6 +1828,26 @@ PldaModel::~PldaModel(){
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 String PldaModel::getClassName() const{	return "PldaModel";}
+
+////-----------------------------------------------------------------------------------------------------------------------------------------------------------
+//void PldaModel::splitPerSpeaker(unsigned long nbThread, RealVector<unsigned long> &startIndex){
+//
+//	unsigned long spkPerThread = _Dev.getSpeakerNumber()/nbThread;
+//	startIndex.setSize(nbThread);
+//	startIndex[0] = 0;
+//	
+//	unsigned long firstSpeakerNextList = spkPerThread;
+//	unsigned long spkCounter = 1;
+//	unsigned long currentSession = 0;
+//
+//	while((currentSession<getSessionNumber)&&(spkCounter<nbThread)){
+//		while(_class[currentSession]<spkCounter*spkPerThread){
+//			currentSession++;
+//		}
+//		startIndex[spkCounter] = currentSession;
+//		spkCounter++;
+//	}
+//}
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void PldaModel::initF(Config& config){		///random initialisation of the EigenVoices Matrix
@@ -2004,8 +2024,6 @@ void PldaModel::updateModel(Config& config){
 		for(unsigned long i=0;i<_vectSize;i++)
 			_originalMean(i) = tM[i];
 	}
-
-
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2019,21 +2037,34 @@ void PldaModel::em_iteration(Config &config){
 	_Dev.computeCovMatEigen(_sigmaObs,config);
 
 	// Get statistics (E-step)
-	this->getExpectedValues();
+	this->getExpectedValues(config);
 
 	// Re-estimate _F, _G, _Sigma and _Delta (M-step)
 	this->mStep();
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
-void PldaModel::getExpectedValues(){
+void PldaModel::getExpectedValues(Config &config){
+	
+	#ifdef THREAD          
+	if (config.existsParam("numThread") && config.getParam("numThread").toULong() >0){
+		getExpectedValuesThreaded(config.getParam("numThread").toULong(),config);
+	}
+	else	getExpectedValuesUnThreaded(config); 			//unthreaded version
+	#else
+		getExpectedValuesUnThreaded(config);			//accumute stats
+	#endif
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+void PldaModel::getExpectedValuesUnThreaded(Config& config){
 
 	// Create temporary matrices
 	Eigen::MatrixXd FtweightF(_rankF,_rankF);
 	Eigen::MatrixXd GtweightG(_rankG,_rankG);
 	Eigen::MatrixXd inGtweightG(_rankG,_rankG);
-	Eigen::MatrixXd S(_rankG,_rankF); // S = invGtweightGplusEye * FtweightG'; 
-	Eigen::MatrixXd A(_rankF,_rankF); // A = FtweightF - FtweightG * invGtweightGplusEye * FtweightG'
+	Eigen::MatrixXd S(_rankG,_rankF);
+	Eigen::MatrixXd A(_rankF,_rankF);
 
 	// Compute temporary variables
 	this->preComputation();
@@ -2055,7 +2086,7 @@ void PldaModel::getExpectedValues(){
 	unsigned long currentSessionNb = 0;
 
 // IL y a surement des choses qu'on peut sortir de la boucle pour accelerer ?
-// multi-threader cetet boucle
+// multi-threader cette boucle
 	unsigned long sessionCounter = 0;		// counter used to know to which speaker belongs the current session
 	for(unsigned long spk=0;spk<_Dev.getSpeakerNumber();spk++){
 
@@ -2147,6 +2178,271 @@ void PldaModel::getExpectedValues(){
 			_U += Eh.col(c);
 	}	// end speaker loop
 }
+
+#ifdef THREAD
+pthread_mutex_t mutexPLDA=PTHREAD_MUTEX_INITIALIZER;				// Mutex for PLDA
+	
+//-----------------------------------------------------------------------------------------
+//				Data strucutre of thread
+//-----------------------------------------------------------------------------------------
+struct getExpectedValuesThread_data{
+
+	double *v;
+	double *d;
+	double *s;
+	double *invsigma;
+	double *F;
+	double *G;
+	double * invGtweightGplusEye;
+
+	unsigned long rankF;
+	unsigned long rankG;
+	unsigned long vectSize;
+
+	PldaDev *dev;
+
+	unsigned long spkBottom;
+	unsigned long spkUp;	
+	unsigned long numThread;
+};
+
+//-----------------------------------------------------------------------------------------
+//				Thread Routine
+//-----------------------------------------------------------------------------------------
+void *getExpectedValuesThread(void *threadarg) {
+
+// Routine en cours--------------------------------------
+
+	pthread_mutex_init(&mutexPLDA, NULL);		// Mutex for ??? tout ou juste un des accumulateurs ?
+	
+	unsigned long currentSessionNb = 0;		// a inclure dans chaque thread
+	unsigned long sessionCounter = 0;		// counter used to know to which speaker belongs the current session
+
+	struct getExpectedValuesThread_data *my_data;
+	my_data = (struct getExpectedValuesThread_data *) threadarg;
+
+	unsigned long rankF = my_data->rankF;
+	unsigned long rankG = my_data->rankG;
+	unsigned long vectSize = my_data->vectSize;
+
+	Eigen::Map<Eigen::MatrixXd> v(my_data->v,rankF,rankF);
+	Eigen::Map<Eigen::MatrixXd> d(my_data->d,rankF,rankF);
+	Eigen::Map<Eigen::MatrixXd> s(my_data->s,rankG,rankF);
+	Eigen::Map<Eigen::MatrixXd> invsigma(my_data->invsigma,vectSize,vectSize);
+	Eigen::Map<Eigen::MatrixXd> F(my_data->F,vectSize,rankF);
+	Eigen::Map<Eigen::MatrixXd> G(my_data->G,vectSize,rankG);
+	Eigen::Map<Eigen::MatrixXd> invGtweightGplusEye(my_data->invGtweightGplusEye,rankG,rankG);
+
+	Eigen::Map<Eigen::MatrixXd> EhhSum(my_data->invGtweightGplusEye,rankF+rankG,rankF+rankG);
+	Eigen::Map<Eigen::MatrixXd> xhSum(my_data->invGtweightGplusEye,vectSize,rankF+rankG);
+	Eigen::Map<Eigen::MatrixXd> U(my_data->invGtweightGplusEye,rankF+rankG,1);
+
+	PldaDev *dev = my_data->dev;
+
+	unsigned long spkBottom = my_data->spkBottom;
+	unsigned long spkUp = my_data->spkUp;	
+	unsigned long numThread = my_data->numThread;
+	
+	Eigen::MatrixXd M, invJDIVt,MsT;
+
+	for(unsigned long spk=spkBottom;spk<spkUp;spk++){
+
+			// Initialize_Eh for the current speaker
+			unsigned long spkSessionNumber = dev->getSpeakerSessionNumber(spk);
+			Eigen::MatrixXd _Eh =  Eigen::MatrixXd::Zero(rankF+rankG,spkSessionNumber);		//initialize for each speaker
+
+			// Compute M, the first part of ATISigA^-1 which depends on the number of session per speaker
+			if(spkSessionNumber != currentSessionNb){
+
+				currentSessionNb = spkSessionNumber;
+				M = Eigen::MatrixXd::Zero(rankF,rankF);
+
+				// JDIVt = inv(J*D+eye(N_F))*V';
+				Eigen::MatrixXd JDI = (currentSessionNb*d+Eigen::MatrixXd::Identity(rankF,rankF));
+				invJDIVt = JDI.inverse() * v.transpose();	// optimize: don't use inverse for a diagonal matrix
+
+				// Compute  M = V * Inv_JD_I_VT;
+				M = v*invJDIVt;
+	
+				//Compute MsT = M*s';
+				MsT = M*s.transpose();
+			}
+
+			//Compute Sigma_x = inv_Sigma * x{cInd}; 			// get data of current speaker: session start from sessionCounter until 
+			unsigned long spkFirstSession = sessionCounter;
+			unsigned long spkClass = dev->getClass(sessionCounter); 
+			while((sessionCounter < dev->getSessionNumber())&&(dev->getClass(sessionCounter) == spkClass)){
+				sessionCounter++;
+			}
+			unsigned long spkLastSession = sessionCounter-1;
+
+			Eigen::MatrixXd Sigma_x = Eigen::MatrixXd::Zero(vectSize,dev->getSpeakerSessionNumber(spk));
+			for(unsigned long i=0;i<vectSize;i++)
+				for(unsigned long j=0;j<dev->getSpeakerSessionNumber(spk);j++)
+					for(unsigned long k=0;k<vectSize;k++)
+						Sigma_x(i,j) += invsigma(i,k) * dev->getData(k,spkFirstSession+j);
+
+			//Compute f = sum(F'* Sigma_x,2);
+			Eigen::MatrixXd fi	= F.transpose()* Sigma_x;
+			Eigen::VectorXd f	= Eigen::VectorXd::Zero(rankF); 
+			for(int r=0;r<fi.cols();r++)
+				f += fi.col(r);
+
+			//Compute gi = G' * Sigma_x;
+			//Compute g = sum(gi,2);
+			Eigen::MatrixXd gi	= G.transpose()* Sigma_x;
+			Eigen::VectorXd g	= Eigen::VectorXd::Zero(rankG); 
+			for(int r=0;r<gi.cols();r++)
+				g += gi.col(r);
+
+			//Compute thisEh = M *(f - s'*g);
+			Eigen::MatrixXd thisEh = M * (f - s.transpose()*g);
+
+			//Compute thisEw = bsxfun(@minus,c*gi, s*thisEh);
+			Eigen::MatrixXd invGtweightGplusEyegi = invGtweightGplusEye*gi;
+			Eigen::VectorXd SthisEh = s*thisEh;
+			for(int c=0;c<invGtweightGplusEyegi.cols();c++)
+				invGtweightGplusEyegi.col(c) -= SthisEh;
+
+			//Create Eh{cInd} = [repmat(thisEh,1,J); thisEw];
+			Eigen::MatrixXd Eh(thisEh.rows()+invGtweightGplusEyegi.rows(),invGtweightGplusEyegi.cols());
+			for(int c=0;c<invGtweightGplusEyegi.cols();c++)
+				Eh.block(0,c,thisEh.rows(),1)=thisEh;
+			for(int r = 0;r<invGtweightGplusEyegi.rows();r++)
+				Eh.row(thisEh.rows()+r) = invGtweightGplusEyegi.row(r);
+
+
+			//Compute EhhSum = EhhSum + J*[M, -MsT; -MsT', c + s*MsT] + Eh{cInd}*Eh{cInd}'; 
+				// Create [M, -MsT; -MsT', c + s*MsT]
+	// TO DO modifier les dimensions de la matrice tmpM et Eh (ci-dessus) pour utiliser les valeurs constantes ou plus parlantes
+			Eigen::MatrixXd tmpM(thisEh.rows()+invGtweightGplusEyegi.rows(),thisEh.rows()+invGtweightGplusEyegi.rows());
+			tmpM.block(0,0,rankF,rankF)			= M;
+			tmpM.block(0,rankF,rankF,rankG)		= -MsT;
+			tmpM.block(rankF,0,rankG,rankF)		= -MsT.transpose();
+			tmpM.block(rankF,rankF,rankG,rankG)	= invGtweightGplusEye + s*MsT;
+
+			// Update Accumulators
+			pthread_mutex_lock(&mutexPLDA);		// Lock Mutex
+
+			EhhSum +=  spkSessionNumber*tmpM + Eh*Eh.transpose();
+
+			//Compute xhSum = xhSum + x{cInd}* Eh{cInd}';   % Calculate terms for updates
+			for(unsigned long i=0;i<vectSize;i++)
+				for(unsigned long j=0;j<rankF+rankG;j++)
+					for(unsigned long k=0;k<dev->getSpeakerSessionNumber(spk);k++)
+						xhSum(i,j) += dev->getData(i,spkFirstSession+k) * Eh(j,k);
+
+			//Compute u = u + sum(Eh{cInd},2);
+			for(int c=0;c<gi.cols();c++)
+				U += Eh.col(c);
+
+			pthread_mutex_unlock(&mutexPLDA);	// Unlock Mutex
+	}	// end speaker loop
+
+	pthread_exit((void*) 0);
+	return (void*)0 ;
+}
+
+//-----------------------------------------------------------------------------------------
+void PldaModel::getExpectedValuesThreaded(unsigned long NUM_THREADS, Config& config){
+
+	try{
+		if (verboseLevel >= 1) cout << "(PldaModel) Estimate Compute Expected Values for PLDA Threaded"<<endl;
+		if (NUM_THREADS==0) throw Exception("Num threads can not be 0",__FILE__,__LINE__);
+
+		// Create temporary matrices
+		Eigen::MatrixXd FtweightF(_rankF,_rankF);
+		Eigen::MatrixXd GtweightG(_rankG,_rankG);
+		Eigen::MatrixXd inGtweightG(_rankG,_rankG);
+		Eigen::MatrixXd S(_rankG,_rankF);
+		Eigen::MatrixXd A(_rankF,_rankF);
+
+		// Compute temporary variables
+		this->preComputation();
+		FtweightF = _Ftweight * _F;
+		S = _invGtweightGplusEye * _FtweightG.transpose();
+		A = FtweightF - _FtweightG*_invGtweightGplusEye*_FtweightG.transpose();
+
+		// Compute Eigen Decomposition
+		Eigen::EigenSolver<Eigen::MatrixXd> es(A);
+		Eigen::MatrixXd V = es.eigenvectors().real();
+		Eigen::MatrixXd D = es.eigenvalues().real().asDiagonal();
+
+		//Init accumulators
+		_EhhSum = Eigen::MatrixXd::Zero(_rankF+_rankG,_rankF+_rankG);
+		_xhSum = Eigen::MatrixXd::Zero(_vectSize,_rankF+_rankG);
+		_U = Eigen::MatrixXd::Zero(_rankF+_rankG,1);	// TO DO changer pour un vecteur
+		
+		int rc, status;
+		if (NUM_THREADS > _Dev.getSpeakerNumber()) NUM_THREADS=_Dev.getSpeakerNumber();
+
+		// split the list
+		RealVector<unsigned long> startIndex;
+		_Dev.splitPerSpeaker(NUM_THREADS, startIndex);
+
+		struct getExpectedValuesThread_data *thread_data_array = new getExpectedValuesThread_data[NUM_THREADS];
+		pthread_t *threads = new pthread_t[NUM_THREADS];
+
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+		//Create threads
+		for(unsigned long t=0; t<NUM_THREADS; t++){
+
+			double *v = V.data();	// a remplacer par l'equivalent dans Eigen
+			double *d = D.data();
+			double *s = S.data();
+			double *invsigma = _invSigma.data();
+			double *F = _F.data();
+			double *G = _G.data();
+			double * invGtweightGplusEye = _invGtweightGplusEye.data();
+			
+			//PldaDev &dev = _Desv;
+
+			unsigned long spkBottom		= startIndex[t];
+			unsigned long spkUp = 0;
+			if(t<NUM_THREADS-1)	spkUp	= startIndex[t+1];
+			else{				spkUp	= _Dev.getSpeakerNumber();}
+			unsigned long numThread = t;
+
+			thread_data_array[t].v = v;
+			thread_data_array[t].d = d;
+			thread_data_array[t].s = s;
+			thread_data_array[t].invsigma = invsigma;
+			thread_data_array[t].F = F;
+			thread_data_array[t].G = G;
+			thread_data_array[t].invGtweightGplusEye = invGtweightGplusEye;
+			thread_data_array[t].rankF = _rankF;
+			thread_data_array[t].rankG = _rankG;
+			thread_data_array[t].vectSize = _vectSize;
+			thread_data_array[t].dev = &_Dev;
+			thread_data_array[t].spkBottom = spkBottom;
+			thread_data_array[t].spkUp = spkUp;	
+			thread_data_array[t].numThread = numThread;
+
+			if (verboseLevel>1) cout<<"(PldaModel) Creating thread n["<< t<< "] for speakers["<<spkBottom<<"-->"<<spkUp-1<<"]"<<endl;
+			rc = pthread_create(&threads[t], &attr, getExpectedValuesThread, (void *)&thread_data_array[t]);
+			if (rc) throw Exception("ERROR; return code from pthread_create() is ",__FILE__,rc);
+		}
+	
+		pthread_attr_destroy(&attr);
+		for(unsigned long t=0; t<NUM_THREADS; t++) {
+			rc = pthread_join(threads[t], (void **)&status);
+			if (rc)  throw Exception("ERROR; return code from pthread_join() is ",__FILE__,rc);
+			if (verboseLevel >1) cout <<"(AccumulateTVStat) Completed join with thread ["<<t<<"] status["<<status<<"]"<<endl;
+		}
+		
+		free(thread_data_array);
+		free(threads);
+	
+		if (verboseLevel >= 1) cout << "(PldaModel) Done " << endl;
+	}
+	catch (Exception& e){ 
+		cout << e.toString().c_str() << endl;
+	}
+}
+#endif
 
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 void PldaModel::mStep(){

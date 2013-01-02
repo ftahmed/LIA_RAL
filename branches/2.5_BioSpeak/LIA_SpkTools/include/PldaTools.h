@@ -377,9 +377,9 @@ class LIA_SPKTOOLS_API PldaModel{
 
 		virtual String getClassName() const;
 
-
 		void initF(Config& config);
 
+		void splitPerSpeaker(unsigned long nbThread, RealVector<unsigned long> &startIndex);
 
 		void initG(Config& config);
 
@@ -391,9 +391,15 @@ class LIA_SPKTOOLS_API PldaModel{
 
 		void em_iteration(Config &config);
 
+		void getExpectedValues(Config&);
+		void getExpectedValuesUnThreaded(Config&);
 
-		void getExpectedValues();
-
+		#ifdef THREAD
+			/// Threaded fonction to estimate PLDA model
+			/// @param config config filename
+			///
+			void getExpectedValuesThreaded(unsigned long numThread, Config& config);
+		#endif
 	
 		void saveModel(Config &config);
 
