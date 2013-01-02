@@ -299,7 +299,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_SpkDet/$(ProjectName)/include;$(SolutionDir)/include/Eigen;$(SolutionDir)/include/Pthread</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_SpkDet/$(ProjectName)/include;$(SolutionDir)/include/Eigen;$(SolutionDir)/include/Pthread;$(SolutionDir)/LIA_Utils/BNGram/include;$(SolutionDir)/LIA_Utils/LabelNGram/include;$(SolutionDir)/LIA_Utils/SequenceExtractor/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
