@@ -77,8 +77,8 @@ int IvNorm(Config & config){
 	if(!config.getParam("ivNormLoadParam").toBool()){
 
 		//Initialize development data
-		String ivNormNdxFilename = config.getParam("ivNormNdxFilename");
-		PldaDev dev(ivNormNdxFilename,config);
+		String backgroundNdxFilename = config.getParam("backgroundNdxFilename");
+		PldaDev dev(backgroundNdxFilename,config);
 
 		if(config.getParam("ivNormIterationNb").toULong() > 0)	//Estimate normalization parameters
 			dev.sphericalNuisanceNormalization(config);
