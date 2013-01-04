@@ -67,6 +67,7 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 
 #include <alize.h>
 #include "liatools.h"
+#include <Core>
 //#include <Dense>
 //#include <Cholesky>
 
@@ -135,6 +136,11 @@ class LIA_SPKTOOLS_API PldaDev{
 		/// Get the total number of sessions for a give speaker
 		///
 		unsigned long getSpeakerSessionNumber(unsigned long);
+
+		/// Get the vector of the total number of sessions per speaker
+		///
+		ULongVector& getSpeakerSessionNumber();
+
 
 		/// Get the matrix of vectors
 		/// 
@@ -262,6 +268,13 @@ class LIA_SPKTOOLS_API PldaDev{
 		///
 		void splitPerSpeaker(unsigned long nbThread, RealVector<unsigned long> &startIndex);
 
+		/// Split the list of speaker in a given number of sublists and return the index of the first session of each sub-list 
+		/// @param nbThread number of sub-list to split
+		/// @param startIndex index of the first session of each sub-list
+		/// @param spkStartIndex index of the first speaker of each sub-list
+		///
+		void splitPerSpeaker(unsigned long nbThread, RealVector<unsigned long> &startIndex, RealVector<unsigned long> &spkStartIndex);
+
 		/// Compute the scatter matrices
 		/// @param SW the within class covariance matrix
 		/// @param SB the between class covariance matrix
@@ -306,6 +319,8 @@ class LIA_SPKTOOLS_API PldaDev{
 		void computeEigenProblem(Matrix<double> &EP, Matrix<double> &eigenVect , Matrix<double> &eigenVal , long rank,Config &config);
 
 		unsigned long getClass(unsigned long);
+
+		ULongVector& getClass();
 };
 
 
@@ -348,7 +363,7 @@ class LIA_SPKTOOLS_API PldaModel{
 		Eigen::MatrixXd _invGtweightGplusEye;
 
 		// Accumulateurs pour l'apprentissage
-		Eigen::MatrixXd _Eh;	// TO DO utilise ou ?
+//		Eigen::MatrixXd _Eh;	// TO DO utilise ou ?
 		Eigen::MatrixXd _EhhSum;
 		Eigen::MatrixXd _xhSum;
 		Eigen::MatrixXd _U;
