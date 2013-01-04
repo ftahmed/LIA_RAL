@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
 				cc.addStringParam("inputVectorFilename",true,true,"list of vectors to normalize");
 		else{		// if data, requires parameter to know if we save the matrices or not
 			initCc.addStringParam("loadVectorFilesPath",true,true,"path to vectors");
-			cc.addStringParam("ivNormNdxFilename",true,true,"list of files for normalization parameters estimation");
+			cc.addStringParam("backgroundNdxFilename",true,true,"list of files for normalization parameters estimation");
 			cc.addStringParam("inputVectorFilename",false,true,"input list of vectors to normalize");
 			cc.addStringParam("ndxFilename",false,true,"input list of vectors to normalize as test Ndx file");
 		}
