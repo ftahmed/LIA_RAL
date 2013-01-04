@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
 		CmdLine cmdLine(argc, argv);
 
 		// Needed params
-		initCc.addStringParam("pldaNdxFilename",true,true,"NDX of multiple GMM speaker recordings");
+		initCc.addStringParam("ndxFilename",true,true,"NDX of multiple GMM speaker recordings");
 		initCc.addStringParam("loadVectorFilesPath",true,true,"directory of vectors to load");
 		initCc.addStringParam("loadMatrixFormat",true,true,"format of matrices to load, DB for binary, DT for ASCII");
 		initCc.addStringParam("saveMatrixFormat",true,true,"format of matrices to save, DB for binary, DT for ASCII");
