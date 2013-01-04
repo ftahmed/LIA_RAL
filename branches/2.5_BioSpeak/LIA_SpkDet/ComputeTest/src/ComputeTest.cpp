@@ -1368,8 +1368,9 @@ int ComputeTestIV(Config& config){
 
 		//Initialize development data
 		if(verboseLevel>0) cout<<"(ComputeTestIV)	Load development data"<<endl;
-		String ivNormNdxFilename = config.getParam("ivNormNdxFilename");
-		PldaDev dev(ivNormNdxFilename,config);
+		String backgroundNdxFilename = config.getParam("backgroundNdxFilename");
+
+		PldaDev dev(backgroundNdxFilename,config);
 
 		//calcule les parametres de normalisation (incluant LDA)
 		if(config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()){
@@ -1473,6 +1474,7 @@ int ComputeTestIV(Config& config){
 
 	//For PLDA scoring, normalization is done separately using PldaDev from the PldaModel and PLDA training data
 	if((scoring=="plda") && (!config.getParam("pldaLoadModel").toBool())){
+
 
 		//creer le modele
 		PldaModel plda("train",config);

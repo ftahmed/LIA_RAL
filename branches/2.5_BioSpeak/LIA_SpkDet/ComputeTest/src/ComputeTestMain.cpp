@@ -66,7 +66,6 @@ try {
 		// Insertion of config compatibility rules
 		CmdLine cmdLine(argc, argv);
 
-
 		//Add list of parameters always mandatory 
 		initCc.addStringParam("config", false, true, "default config filename");
 		initCc.addStringParam("outputFilename",true,true, "output scores in this file: 'gender - test model - scores'");	
@@ -114,7 +113,7 @@ try {
 			if(initConfig.getParam("ivNorm").toBool()){
 //				cc.addBooleanParam("ivNorm",false,true, "true/false normalize i-vectors");
 				cc.addBooleanParam("ivNormLoadParam",true,true,"load existing normalization parameters");
-				cc.addStringParam("ivNormNdxFilename",true,true,"list of files for normalization parameters estimation");
+				cc.addStringParam("backgroundNdxFilename",true,true,"list of files for normalization parameters estimation");
 
 				cc.addBooleanParam("LDA",false,true,"apply Linear Discriminant Analysis");
 				cc.addIntegerParam("ivNormIterationNb",true,true,"apply Eigen Factor Radial normalization");
@@ -147,6 +146,7 @@ try {
 
 					if(!initConfig.getParam("pldaLoadModel").toBool()){
 						cc.addIntegerParam("pldaNbIt",true,true,"number of iterations for PLDA training");
+// ajouter les parametres d'apprentissage de la PLDA lodaInitMOdel...
 					}
 				}
 
