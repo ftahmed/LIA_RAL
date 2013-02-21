@@ -193,6 +193,8 @@ void TVAcc::_init(XList &ndx, Config &config){
 	_r.setAllValues(0.0);
 }
 
+
+
 //-----------------------------------------------------------------------------------------
 void TVAcc::_init(Config &config){
 
@@ -281,6 +283,8 @@ void TVAcc::computeAndAccumulateTVStat(Config& config){
 
 //-----------------------------------------------------------------------------------------
 void TVAcc::computeAndAccumulateTVStatUnThreaded(Config& config){
+
+	if (verboseLevel >= 1) cout << "(AccumulateTVStat) Compute Statistics UnThreaded"<<endl;
 
 	MixtureGD& UBM = _ms.getMixtureGD(0);
 	MixtureGDStat &acc=_ss.createAndStoreMixtureStat(UBM);
@@ -1067,14 +1071,6 @@ void TVAcc::substractMUnThreaded(){
 			}
 		}
 	}
-
-cerr<<"Display statistics after mean substraction: "<<endl;
-for(unsigned long i=0; i<_n_distrib; i++){
-	for(unsigned long j = 0; j< _vectSize;j++){
-		cerr<<F_X[i*_vectSize+j]<<endl;
-	}
-}
-
 }
 
 #ifdef THREAD
@@ -1934,13 +1930,12 @@ void TVAcc::estimateWUnThreaded(Config& config){
 
 		double *l;
 		l=L.getArray();
-cerr<<"Calcul de L"<<endl;
+
 		for(unsigned long dis=0; dis<_n_distrib;dis++){
 			double *tett=_TETt[dis].getArray();
 			for(unsigned long i=0; i<_rankT; i++){
 				for(unsigned long j=0; j<=i; j++){
 					l[i*_rankT+j] =+ l[i*_rankT+j] + tett[i*_rankT+j]*n[spk*_n_distrib+dis];
-if( i==0 && j==0 ) cerr<<l[i*_rankT+j]<<"	"<<tett[i*_rankT+j]<<"	"<<n[spk*_n_distrib+dis]<<endl;
 				}
 			}
 		}
@@ -1951,16 +1946,7 @@ if( i==0 && j==0 ) cerr<<l[i*_rankT+j]<<"	"<<tett[i*_rankT+j]<<"	"<<n[spk*_n_dis
 				l[i*_rankT+j] = l[j*_rankT+i];
 			}
 		}
-
-cerr<<"Display L "<<endl;
-		for(unsigned long i=0;i<_rankT;i++){
-			for(unsigned long j=0;j<_rankT;j++) {
-				cerr<<l[i*_rankT+j]<<"	";
-			}
-			cerr<<endl;
-		}
-cerr<<endl<<endl;
-		
+	
 		//Inverse L
 		DoubleSquareMatrix Linv(_rankT);
 		L.invert(Linv);
@@ -1972,12 +1958,6 @@ cerr<<endl<<endl;
 				aux[i] += f_x[spk*_svSize+k] * invVar[k] * t[i*_svSize+k];
 			}
 		}
-
-cerr<<"Display aux "<<endl;
-		for(unsigned long i=0;i<_rankT;i++){
-			cerr<<aux[i]<<"	";
-		}
-cerr<<endl<<endl;
 
 		//multiplication by invL
 		for(unsigned long i=0; i<_rankT;i++){
@@ -2159,7 +2139,7 @@ void TVAcc::saveWbyFile(Config &config){
 	
 	String svPath=config.getParam("saveVectorFilesPath");
 	String yExtension = ".y";
-	if(config.existsParam("yExtension"))	yExtension = config.getParam("yExtension");
+	if(config.existsParam("vectorFilesExtension"))	yExtension = config.getParam("vectorFilesExtension");
 
 	String inputClientListFileName = config.getParam("targetIdList");
 	XList inputClientList(inputClientListFileName,config);

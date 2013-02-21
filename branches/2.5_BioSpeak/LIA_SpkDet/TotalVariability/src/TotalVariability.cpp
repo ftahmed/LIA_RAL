@@ -72,7 +72,7 @@ int TotalVariability(Config & config){
 
 	//Read the NDX file
 	String ndxFilename = config.getParam("ndxFilename");
-	
+
 	//Create and initialise the accumulator
 	TVAcc tvAcc(ndxFilename, config);
 
@@ -80,7 +80,6 @@ int TotalVariability(Config & config){
 	bool _checkLLK = false;
 	if (config.existsParam("checkLLK")) _checkLLK= config.getParam("checkLLK").toBool();
 	else if (verboseLevel >=1) _checkLLK= true;
-
 	//Statistics
 	if((config.existsParam("loadAccs")) && config.getParam("loadAccs").toBool()){	//load pre-computed statistics
 		cout<<"	()Load Accumulators"<<endl;
@@ -116,15 +115,15 @@ int TotalVariability(Config & config){
 	//Iteratively retrain the EV matrix
 	unsigned long nbIt = config.getParam("nbIt").toULong();
 
-	//Compute TETt for each distribution
-	tvAcc.estimateTETt(config);
-
 	for(unsigned long it=0; it<nbIt; it++){
 		
 		cout<<"	(TotalVariability) --------- start iteration "<<it<<" --------"<<endl;
 
 		//Subtract mean from the statistics
 		tvAcc.substractM(config);
+
+		//Compute TETt for each distribution
+		tvAcc.estimateTETt(config);
 
 		// Compute inverse(L) and estimate TotalVariability matrix
 		tvAcc.estimateAandC(config);
@@ -142,18 +141,16 @@ int TotalVariability(Config & config){
 
 		//If the option is on, orthonormalize the matrix V
 		if(config.existsParam("orthonormalizeT") && (config.getParam("orthonormalizeT").toBool())){
-			if(verboseLevel > 0) cerr<<"Orthonormalize TV matrix"<<endl;
+			if(verboseLevel > 0) cout<<"Orthonormalize TV matrix"<<endl;
 			tvAcc.orthonormalizeT();
 		}
 
 		//Reinitialize the accumulators
 		tvAcc.resetTmpAcc();
-//		tvAcc.restoreAccs();						//save memory
-		
-//		cout<<"	()Load Accumulators"<<endl;			//save memory
-//		tvAcc.loadN(config);						//save memory
-//		tvAcc.loadF_X(config);						//save memory
-		
+
+		//Reload statistics
+		tvAcc.loadN(config);
+		tvAcc.loadF_X(config);
 
 		//Save the T matrix at the end of the iteration
 		bool saveAllEVMatrices = false;

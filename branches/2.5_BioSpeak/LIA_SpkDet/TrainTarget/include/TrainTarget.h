@@ -72,8 +72,6 @@ int TrainTargetLFA(alize::Config&);
 
 int TrainTargetJFA(alize::Config&);
 
-int TrainTargetIVector(alize::Config&);
-
 int TrainTargetByLabel(alize::Config&);
 #endif // !defined(TrainTarget)
 

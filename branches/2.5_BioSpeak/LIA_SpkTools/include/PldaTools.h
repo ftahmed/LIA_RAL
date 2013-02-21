@@ -14,7 +14,7 @@ it under the terms of the GNU Lesser General Public License as
 published by the Free Software Foundation, either version 3 of
 the License, or any later version.
 
-LIA_RAL is distributed in the hope that it will be useful,
+LIA_RAL is distributed in the hope that it will be useful
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU Lesser General Public License for more details.
@@ -68,9 +68,6 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 #include <alize.h>
 #include "liatools.h"
 #include <Core>
-//#include <Dense>
-//#include <Cholesky>
-
 
   /// This class represents a accumulator of statistics. 
   /// A TVAcc contains the accumulators needed for TotalVariability
@@ -246,7 +243,7 @@ class LIA_SPKTOOLS_API PldaDev{
 			/// @param config config filename
 			/// @param threads number of threads to run
 			///
-			void computeWccnCholThreaded(DoubleSquareMatrix &WCCN, unsigned long threads);
+			void computeWccnCholThreaded(DoubleSquareMatrix &WCCN, unsigned long threads,Config & config);
 		#endif
 
 		/// Unthreaded fonction to compute the Choleski decomposition of Within Class Covariance matrix
@@ -309,19 +306,204 @@ class LIA_SPKTOOLS_API PldaDev{
 
 
 		/// Estimate parameters for Probabilistic Linear Discriminant Analysis model
-		/// @param L LDA matrix computed on the development set
 		/// @param config configuration object
 		///
 		void trainPLDA(Config &config);		// modifier les parametres...
 
-		void computeLDA(Matrix<double> &L, long ldaRank, Config &config);//BF
+		/// Compute Linear Discriminant Analysis matrix
+		/// @param L LDA matrix computed on the development set
+		/// @param ldaRank rank of the LDA matrix
+		/// @param config configuration object
+		///
+		void computeLDA(Matrix<double> &L, long ldaRank, Config &config);
+
+		/// Compute Eigen Value decomposition
+		/// @param EP matrix to decompose
+		/// @param eigenVect matrix of eigen vectors
+		/// @param rank number of eigen vectors to keep
+		/// @param config configuration object
+		///
 		void computeEigenProblem(Matrix<double> &EP,Matrix<double> &eigenVect, long rank, Config& config);
+
+		/// Compute Eigen Value decomposition
+		/// @param EP matrix to decompose
+		/// @param eigenVect matrix of eigen vectors
+		/// @param eigenVal diagonal matrix of eigen values
+		/// @param rank number of eigen vectors to keep
+		/// @param config configuration object
+		///
 		void computeEigenProblem(Matrix<double> &EP, Matrix<double> &eigenVect , Matrix<double> &eigenVal , long rank,Config &config);
 
 		unsigned long getClass(unsigned long);
 
 		ULongVector& getClass();
 };
+
+
+
+
+
+
+/// This class contains a PLDA model 
+  /// 
+  /// @author Anthony Larcher  alarcher@i2r.a-star.edu.sg
+  /// @version 1.0
+  /// @date 2012
+
+class LIA_SPKTOOLS_API PldaModel{
+
+	private :
+	
+		//Development data
+		PldaDev _Dev;				// Development data
+
+		// Model parameteres
+		unsigned long _rankF;
+		unsigned long _rankG;
+		unsigned long _vectSize;
+
+		// Model Matrices
+		Eigen::VectorXd _originalMean;
+		Eigen::MatrixXd _F;				// Speaker subspace 
+		Eigen::MatrixXd _G;				// Channel subspace
+		Eigen::MatrixXd _Sigma;			// Precision matrix
+		Eigen::VectorXd _Delta;			// new Mean computed with Minimum Divergence
+
+		// Temporary accumulators
+		Eigen::MatrixXd _sigmaObs;
+		Eigen::MatrixXd _invSigma;
+		Eigen::MatrixXd _Ftweight;
+		Eigen::MatrixXd _Gtweight;
+		Eigen::MatrixXd _GtweightG;
+		Eigen::MatrixXd _FtweightG;
+		Eigen::MatrixXd _invGtweightGplusEye;
+
+		// Accumulateurs pour l'apprentissage
+//		Eigen::MatrixXd _Eh;	// TO DO utilise ou ?
+		Eigen::MatrixXd _EhhSum;
+		Eigen::MatrixXd _xhSum;
+		Eigen::MatrixXd _U;
+
+
+	public :
+
+		/// Constructors
+		PldaModel();
+
+		PldaModel(String mode, Config &config);	
+		// le PldaModel peut etre initialise de 2 facons differentes (train et test)
+
+		void initTrain(PldaDev, Config &);
+		// initialise l'objet avec les accumulateurs de statistiques
+		// recupere les donnees de dev qui ont eventuellement deja ete traitees en parallele de donnees de test
+		// initialise le model avec des matrices existantes ou init random
+		// initialise les accumulateurs Eh, Ehh et u
+		
+		void initTest(Config &);
+		//initialise l'objet avec seulement les donnees necessaires au test
+		// charge depuis un objet PldaModel ou les matrices separemment
+
+		virtual ~PldaModel();
+
+
+		virtual String getClassName() const;
+
+		void initModel(Config &config);
+
+		void initF(Config& config);
+
+		void splitPerSpeaker(unsigned long nbThread, RealVector<unsigned long> &startIndex);
+
+		void initG(Config& config);
+
+		void updateMean();
+
+		void centerData();
+
+		void updateModel(Config&);
+
+		void em_iteration(Config &config,unsigned long it);
+
+		void getExpectedValues(Config&, unsigned long it);
+		void getExpectedValuesUnThreaded(Config&);
+
+		#ifdef THREAD
+			/// Threaded fonction to estimate PLDA model
+			/// @param config config filename
+			///
+			void getExpectedValuesThreaded(unsigned long numThread, Config& config, unsigned long it);
+		#endif
+	
+		void saveModel(Config &config);
+
+
+		void mStep(unsigned long it,Config& config);
+
+		/// Load EigenVoice matrix
+		/// @param filename name of the file to load
+		/// @param config the configuration
+		/// 
+		void loadF(String filename, Config& config);
+
+		/// Load EigenChannel matrix
+		/// @param filename name of the file to load
+		/// @param config the configuration
+		/// 
+		void loadG(String filename, Config& config);
+
+		/// Load Noise matrix
+		/// @param filename name of the file to load
+		/// @param config the configuration
+		/// 
+		void loadNoise(String filename, Config& config);
+
+		/// Load Original mean vector
+		/// @param filename name of the file to load
+		/// @param config the configuration
+		/// 
+		void loadOriginalMean(String filename, Config& config);
+
+		/// Load Mean vector
+		/// @param filename name of the file to load
+		/// @param config the configuration
+		/// 
+		void loadDelta(String filename, Config& config);
+
+		/// Precomputation of temporary variables
+		/// 
+		void preComputation();
+
+		void save(String filename, Config& config);		// a ecrire
+
+		void load(String filename, Config& config);		// a ecrire
+
+		Eigen::MatrixXd getFtweight();
+
+		Eigen::MatrixXd getFtweightG();
+
+		Eigen::MatrixXd getInvGtweightGplusEye();
+
+		Eigen::MatrixXd getGtweight();
+
+		Eigen::MatrixXd getF();
+
+		unsigned long getRankF();
+
+		unsigned long getRankG();
+
+		PldaDev& getDev();
+
+};
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -374,6 +556,8 @@ class LIA_SPKTOOLS_API PldaTest{
 		/// @param config the configuration
 		///
 		void load(Config &);
+
+		void splitPerModel(unsigned long nbThread, RealVector<unsigned long> &startIndex, RealVector<unsigned long> &startModel);
 
 		/// Get the size of data vectors
 		///
@@ -445,12 +629,35 @@ class LIA_SPKTOOLS_API PldaTest{
 		/// 
 		void mahalanobisDistance(Matrix<double>& Mah, Config &config);
 
+
+		void twoCovScoringMixPart(DoubleSquareMatrix &G, Config &config);
+		void twoCovScoringMixPartUnThreaded(DoubleSquareMatrix &G, Config& config);
+		void twoCovScoringMixPartThreaded(DoubleSquareMatrix &G, unsigned long NUM_THREADS);
+
+
 		/// Compute test using two covariance model
 		/// @param W the within class covariance matrix
 		/// @param B the between class covariance matrix
 		/// @param config the configuration
 		///
 		void twoCovScoring(DoubleSquareMatrix& W, DoubleSquareMatrix& B, Config &config);
+
+
+		void pldaScoring(Config &config, Eigen::MatrixXd FTJF, double alpha_one, Eigen::MatrixXd K_one, unsigned long rankF);
+		void pldaScoringUnThreaded(Config& config, Eigen::MatrixXd FTJF, double alpha_one, Eigen::MatrixXd K_one, unsigned long rankF);
+		void pldaScoringThreaded(Config &config, Eigen::MatrixXd FTJF, double alpha_one, Eigen::MatrixXd K_one, unsigned long rankF, unsigned long NUM_THREADS);
+
+		/// Compute test using Probabilistic Linear Discriminant Analysis native scoring
+		/// @param pldaModel the PLDA generative model
+		/// @param config the configuration
+		///
+		void pldaNativeScoring(PldaModel& pldaModel, Config &config);
+
+		/// Compute test using Probabilistic Linear Discriminant Analysis and mean of enrollment sesisojns for each model
+		/// @param pldaModel the PLDA generative model
+		/// @param config the configuration
+		///
+		void pldaMeanScoring(PldaModel& pldaModel, Config &config);
 
 		/// Save test segments vector after normalization
 		/// @param outputDir output directory to store normalized vectors
