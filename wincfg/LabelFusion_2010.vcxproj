@@ -160,7 +160,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -170,7 +170,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
@@ -181,7 +181,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -191,14 +191,14 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -206,7 +206,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -218,7 +218,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -226,7 +226,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -236,7 +236,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug§MT|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -246,7 +246,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
@@ -257,7 +257,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -267,14 +267,14 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_$(Configuration).lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/$(Configuration);$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release-MT|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen;$(SolutionDir)/include/Pthread</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen;$(SolutionDir)/include/Pthread</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -283,7 +283,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_Release.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/Release;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/Release;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -295,7 +295,7 @@
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen;$(SolutionDir)/include/Pthread</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen;$(SolutionDir)/include/Pthread</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -304,7 +304,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_Release.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/Release;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/Release;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -314,7 +314,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-MT|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -325,7 +325,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_Debug.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/Debug;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/Debug;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
@@ -336,7 +336,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE_2.0/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)/../ALIZE/include;$(SolutionDir)/LIA_SpkTools/include;$(SolutionDir)/LIA_Utils/$(ProjectName)/include;$(SolutionDir)/include/Eigen</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -347,7 +347,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>liatools_$(Platform)_$(Configuration).lib;ALIZE_$(Platform)_Debug.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE_2.0/lib/Debug;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/../ALIZE/lib/Debug;$(SolutionDir)/lib/$(Configuration);$(SolutionDir)/lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>

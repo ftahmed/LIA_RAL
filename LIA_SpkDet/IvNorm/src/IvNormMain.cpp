@@ -81,6 +81,11 @@ int main(int argc, char* argv[]) {
 		initCc.addStringParam("matrixFilesPath",true,true,"path to matrices");
 
 		initCc.addStringParam("vectorFilesExtension",true,true,"extension of vector files");
+		initCc.addStringParam("ivNormEfrMatrixBaseName",true,true,"Eigen Factor Radial matrix name");
+		initCc.addStringParam("ivNormEfrMeanBaseName",true,true,"Eigen Factor Radial mean vector name");
+		
+		
+
 
 		// Check existing parameters to create the appropriate ConfigChecker
 		Config tmpConfig;
@@ -105,8 +110,10 @@ int main(int argc, char* argv[]) {
 		if(initConfig.existsParam("inputVectorFilename") || initConfig.existsParam("ndxFilename"))
 			cc.addStringParam("saveVectorFilesPath",true,true,"path to save normalized vectors");
 
-		if(initConfig.existsParam("ndxFilename"))
+		if(initConfig.existsParam("ndxFilename")){
 			cc.addStringParam("testVectorFilesPath",true,true,"path to test vectors");
+			cc.addStringParam("targetIdList",true,true,"Index for model training");
+		}
 
 		if(initConfig.getParam("ivNormIterationNb").toLong() != 0 ){
 			cc.addStringParam("ivNormEfrMode",true,true,"normalization to apply, EFR | sphNorm");

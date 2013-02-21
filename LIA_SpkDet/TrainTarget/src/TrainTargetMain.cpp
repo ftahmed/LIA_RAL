@@ -124,13 +124,8 @@ int main(int argc, char* argv[]){
 		else if (config.existsParam("channelCompensation") && (config.getParam("channelCompensation") == "LFA")){
 			LFA=true;
 		}
-		else if (config.existsParam("channelCompensation") && (config.getParam("channelCompensation") == "ivector")){
-			iVector=true;
-		}
-
 		if (JFA)			TrainTargetJFA(config);    					// if JFA is true, for each client, we train one model for each cluster 
 		else if (LFA)		TrainTargetLFA(config);
-		else if (iVector)	TrainTargetIVector(config);
 		else				TrainTarget(config);  
     }
     else   InfoTarget(config);   

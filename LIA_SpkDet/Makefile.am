@@ -7,7 +7,9 @@ SUBDIRS=\
 	EigenVoice\
 	EstimateDMatrix\
 	EnergyDetector\
+	IvExtractor\
 	IvNorm\
+	IvTest\
 	NormFeat\
 	NormFeatWindowMode\
 	PLDA\

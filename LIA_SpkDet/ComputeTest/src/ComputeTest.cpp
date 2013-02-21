@@ -65,7 +65,7 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 
 using namespace alize;
 using namespace std;
-//using namespace Eigen;
+
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -221,7 +221,7 @@ int ComputeTest(Config& config){
 	String inputWorldFilename = config.getParam("inputWorldFilename");                   	// World model file used for the LLR computation
 	String outputNISTFileName = config.getParam("outputFilename");                       	// Result file in NIST style (.nist) result file format
 	String labelSelectedFrames =config.getParam("labelSelectedFrames");              	// label for selected frames - Only the frames from segments 
-																	// with this label  will be used
+																// with this label  will be used
 	bool segmentalMode=false;
 	if (config.existsParam("segmentLLR")) segmentalMode=config.getParam("segmentLLR").toBool();  // selected mode for segmental computation (1 LLR by segment)
 	String gender=config.getParam("gender");                                         			// gives the gender for compatibility reasons with NIST standard output file
@@ -591,18 +591,14 @@ int ComputeTestJFA(Config& config){
 		XList ndx; ndx.addLine() = featureFileListp;
 		JFAAcc jfaAcc(ndx,config,"ComputeTest");
 
-//ajout
-MixtureGD & tmpWorld=ms.duplicateMixture (ms.getMixtureGD(0), DUPL_DISTRIB);
+
+		MixtureGD & tmpWorld=ms.duplicateMixture (ms.getMixtureGD(0), DUPL_DISTRIB);
 		
 		///Load existing JFA matrices
 		jfaAcc.loadEV(V, config); jfaAcc.loadEC(U, config); jfaAcc.loadD(D); 
 
 		///Compute JFA stats
 		jfaAcc.computeAndAccumulateJFAStat(config);
-
-//IL FAUT FAIRE COMME POUR LE TRAIN : ESTIMATION CONJOINTE DE Y ET X, ENSUITE ON SPLIT
-//ET ON NORMALISE LES TRAMES AVEC UX
-
 
 		///Estimate uEuT for the test
 		jfaAcc.estimateUEUT(config);
@@ -654,10 +650,10 @@ MixtureGD & tmpWorld=ms.duplicateMixture (ms.getMixtureGD(0), DUPL_DISTRIB);
 				fs.readFeature(f);
 				if ((idxFrame%worldDecime)==0)                                                					// We want to compute the world LLK and the top gaussian
 					llkw=worldAcc.computeAndAccumulateLLK(f,1.0,DETERMINE_TOP_DISTRIBS);    	// Determine the top components and compute wrld LLK
-//llkw=tmpWorldAcc.computeAndAccumulateLLK(f,1.0,DETERMINE_TOP_DISTRIBS);
+
 				else{ 
 					worldAcc.computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);       			// Determine the top components and compute wrld LLK
-//tmpWorldAcc.computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);
+
 }
 				for (unsigned long i=0;i<tabClientLine.nbClientLine();i++){                             		// For each client, compute LLK using the winning
 					llkc=clientAcc[i].computeAndAccumulateLLK(f,1.0,USE_TOP_DISTRIBS);
@@ -666,7 +662,7 @@ MixtureGD & tmpWorld=ms.duplicateMixture (ms.getMixtureGD(0), DUPL_DISTRIB);
 		}
 		
 		double LLKWorld=worldAcc.getMeanLLK();                                                 		// Take the world LLK
-//double LLKWorld=tmpWorldAcc.getMeanLLK(); 
+
 		for (unsigned int i=0;i < tabClientLine.nbClientLine();i++){                             	// For each client
 			double LLKClient=clientAcc[i].getMeanLLK();            // Get the mean LLK 		  
 			double LLRClient=LLKClient-LLKWorld;                                          // Compute the LLR
@@ -1305,400 +1301,6 @@ int ComputeTestHisto(Config& config)
   }
   return 0;
 }
-
-
-
-//-------------------------------------------------------------------------------------------------------
-//	Compute Test for I-Vector front end
-//-------------------------------------------------------------------------------------------------------
-int ComputeTestIV(Config& config){
-
- try{
-
-	String scoring = config.getParam("scoring");
-	String outputNISTFileName = config.getParam("outputFilename");			// Result file in NIST style (.nist) result file format
-	String gender=config.getParam("gender");								// gives the gender for compatibility reasons with NIST standard output file
-
-	real_t decisionThreshold;
-	if (config.existsParam("decisionThreshold"))							// Define the threshold if needed
-		decisionThreshold=config.getParam("decisionthreshold").toDouble();
-	else decisionThreshold=0;
-	unsigned long maxClientLine=CST_MAX_CLIENT_LINE;						// Max of target Id for a ndx line
-	if (config.existsParam("maxTargetLine")) maxClientLine=config.getParam("maxTargetLine").toLong();
-
-	if (config.getParam_debug())debug=true;  else debug=false;
-
-	bool WCCN = false;
-	bool computeWCCN = false;
-	if(config.existsParam("wccn") && config.getParam("wccn").toBool()){
-		WCCN = config.getParam("wccn").toBool();
-		if(config.existsParam("loadWccnMatrix") && !config.getParam("loadWccnMatrix").toBool())
-			computeWCCN = !config.getParam("loadWccnMatrix").toBool();
-			
-	}
-
-	bool loadMahalanobisMatrix = false;
-	if((config.getParam("scoring")=="mahalanobis") && (config.getParam("loadMahalanobisMatrix").toBool()))
-		loadMahalanobisMatrix = config.getParam("loadMahalanobisMatrix").toBool();
-
-	bool loadWccnMatrix = false;
-	if((config.getParam("scoring")=="cosine") && config.getParam("wccn").toBool())
-		loadWccnMatrix = config.getParam("loadWccnMatrix").toBool();
-
-	bool load2covMatrix = false;
-	if((config.getParam("scoring")=="2cov") &&  config.getParam("load2covMatrix").toBool())
-		load2covMatrix = config.getParam("load2covMatrix").toBool();
-
-	// Load test data
-	PldaTest pldaTest(config);
-
-	// On va charger les parametres dans le cas ou UNE des conditions suivante est verifiee:
-	//	config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()&& !config.getParam("ivNormLoadParam").toBool()
-	// (scoring=="mahalanobis") && (!loadMahalanobisMatrix)
-	// (scoring=="cosine") && (!loadWccnMatrix)
-	// (scoring=="2cov") && (!load2covMatrix)
-	//mais pas dans le cas ou scoring == "plda"
-	if(( (config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()&& !config.getParam("ivNormLoadParam").toBool()) ||
-		((scoring=="mahalanobis") && (!loadMahalanobisMatrix)) ||
-		(WCCN && (!loadWccnMatrix)) ||
-		((scoring=="2cov") && (!load2covMatrix))
-		) &&
-		scoring != "plda"
-		){
-
-		//Initialize development data
-		if(verboseLevel>0) cout<<"(ComputeTestIV)	Load development data"<<endl;
-		String backgroundNdxFilename = config.getParam("backgroundNdxFilename");
-
-		PldaDev dev(backgroundNdxFilename,config);
-
-		//calcule les parametres de normalisation (incluant LDA)
-		if(config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()){
-
-			if(verboseLevel>0) cout<<"(ComputeTestIV) Normalize i-vectors"<<endl;
-
-			// Estimate normalization parameters if required
-			if(!config.getParam("ivNormLoadParam").toBool()){
-
-				if(config.getParam("ivNormIterationNb").toULong() > 0){	//Estimate normalization parameters
-					if(verboseLevel>0) cout<<"(ComputeTestIV)	Estimate EFR parameters"<<endl;
-					dev.sphericalNuisanceNormalization(config);
-				}
-
-				if(config.existsParam("LDA") && config.getParam("LDA").toBool()){	//if LDA is required
-
-					if(verboseLevel>0) cout<<"(ComputeTestIV)	Estimate LDA parameters"<<endl;
-
-					Matrix<double> ldaMat;
-					unsigned long ldaRank = config.getParam("ldaRank").toULong();
-					String ldaFilename = config.getParam("matrixFilesPath")+config.getParam("ldaMatrix")+config.getParam("loadMatrixFilesExtension");
-
-					//Compute LDA matrix
-					dev.computeLDA(ldaMat,ldaRank,config);
-					
-					//Apply LDA on development data
-					if(verboseLevel>0)	cout<<"(ComputeTestIV)		Apply LDA on dev data"<<endl;
-					dev.rotateLeft(ldaMat);
-
-					//Save LDA matrix
-					ldaMat.save(ldaFilename,config);
-				}
-			}
-		}
-
-		//Compute Within Class Covariance Matrix for Cosine scoring
-		if(computeWCCN){
-			if(verboseLevel>0) cout<<"(ComputeTestIV)	Estimate WCCN parameters"<<endl;
-			
-			String wccnFilename = "WCCN";
-			if(config.existsParam("wccnMatrix")){
-				wccnFilename = config.getParam("matrixFilesPath")+config.getParam("wccnMatrix")+config.getParam("loadMatrixFilesExtension");
-			}
-
-			Matrix<double> W;
-			DoubleSquareMatrix WCCN;
-			WCCN.setSize(1);
-			WCCN.setAllValues(0.0);
-			dev.computeWccnChol(WCCN,config);
-
-			Matrix<double> tmpW(WCCN);
-			W = tmpW;
-
-			// Save WCCN matrix
-			W.save(wccnFilename,config);
-		}
-
-		//Compute Mahalanobis matrix
-		if(scoring=="mahalanobis"){
-			if(verboseLevel>0) cout<<"Compute Mahalanobis matrix"<<endl;
-
-			//Get Mahalanobis matrix filename
-			String mahalanobisFilename = "Mahalanobis";
-			if(config.existsParam("mahalanobisMatrix")){
-				mahalanobisFilename = config.getParam("matrixFilesPath")+config.getParam("mahalanobisMatrix")+config.getParam("loadMatrixFilesExtension");
-			}
-		
-			//Compute Mahalanobis matrix
-			Matrix<double> Mah;
-
-			//Compute Mahalanobis matrix
-			DoubleSquareMatrix M;
-			dev.computeMahalanobis(M,config);
-			Matrix<double> tmpM(M);
-			Mah = tmpM;
-			Mah.save(mahalanobisFilename,config);
-		}
-
-		//Compute covariance matrices for 2cov scoring
-		if(scoring=="2cov"){
-
-			DoubleSquareMatrix W, B, Sigma;
-			dev.computeCovMat(Sigma,W,B,config);
-
-			//Save covariance matrices
-			String W2covFilename = "2Cov_W";
-			String B2covFilename = "2Cov_B";
-			if(config.existsParam("TwoCovFilename")){
-				W2covFilename = config.getParam("TwoCovFilename")+"_W";
-				B2covFilename = config.getParam("TwoCovFilename")+"_B";
-			}
-			W2covFilename = config.getParam("matrixFilesPath")+W2covFilename+config.getParam("saveMatrixFilesExtension");
-			B2covFilename = config.getParam("matrixFilesPath")+B2covFilename+config.getParam("saveMatrixFilesExtension");
-
-			Matrix<double> tmpW(W);
-			Matrix<double> tmpB(B);
-			tmpW.save(W2covFilename,config);
-			tmpB.save(B2covFilename,config);
-		}
-	}
-
-	//For PLDA scoring, normalization is done separately using PldaDev from the PldaModel and PLDA training data
-	if((scoring=="plda") && (!config.getParam("pldaLoadModel").toBool())){
-
-
-		//creer le modele
-		PldaModel plda("train",config);
-
-		//If normalization is required, estimate parameters here
-		if((config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()&& !config.getParam("ivNormLoadParam").toBool())){
-
-			if(verboseLevel>0) cout<<"(ComputeTestIV) Normalize i-vectors"<<endl;
-
-			if(config.getParam("ivNormIterationNb").toULong() > 0){	//Estimate normalization parameters
-				if(verboseLevel>0) cout<<"(ComputeTestIV)	Estimate EFR parameters"<<endl;
-				plda.getDev().sphericalNuisanceNormalization(config);
-			}
-
-			if(config.existsParam("LDA") && config.getParam("LDA").toBool()){	//if LDA is required
-
-				if(verboseLevel>0) cout<<"(ComputeTestIV)	Estimate LDA parameters"<<endl;
-
-				Matrix<double> ldaMat;
-				unsigned long ldaRank = config.getParam("ldaRank").toULong();
-				String ldaFilename = config.getParam("matrixFilesPath")+config.getParam("ldaMatrix")+config.getParam("loadMatrixFilesExtension");
-
-				//Compute LDA matrix
-				plda.getDev().computeLDA(ldaMat,ldaRank,config);
-					
-				//Apply LDA on development data
-				if(verboseLevel>0)	cout<<"(ComputeTestIV)		Apply LDA on dev data"<<endl;
-				plda.getDev().rotateLeft(ldaMat);
-
-				//Save LDA matrix
-				ldaMat.save(ldaFilename,config);
-			}
-		}
-
-		//Estimate PLDA model parameters
-		// Center data
-		plda.updateModel(config);
-		plda.centerData();
-
-		// EM iterations
-		unsigned long nbIt = config.getParam("pldaNbIt").toULong();
-		for(unsigned long it=0;it<nbIt;it++){
-			if(verboseLevel>0) cout<<"(PLDA)	EM iteration [ "<<it<<" ]"<<endl;
-			plda.em_iteration(config);
-		}
-
-		// save PLDA model
-		plda.saveModel(config);
-	}
-
-
-	//Normalize test data before scoring
-	if(config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()){
-
-		if(config.getParam("ivNormIterationNb").toULong() > 0){
-			pldaTest.sphericalNuisanceNormalization(config);
-		}
-		if(config.existsParam("LDA") && config.getParam("LDA").toBool()){
-
-			//Load LDA matrix
-			Matrix<double> ldaMat;
-			String ldaFilename = config.getParam("matrixFilesPath")+config.getParam("ldaMatrix")+config.getParam("loadMatrixFilesExtension");
-			cout<<"		Load LDA matrix from: "<<ldaFilename<<endl;
-			ldaMat.load (ldaFilename,config);
-
-			//Apply LDA to test data
-			pldaTest.rotateLeft(ldaMat);
-		}
-	}
-
-	//SCORING
-	if(scoring=="cosine"){
-
-		if(WCCN){
-			//rotate test data
-				String wccnFilename = "WCCN";
-				if(config.existsParam("wccnMatrix")){
-					wccnFilename = config.getParam("matrixFilesPath")+config.getParam("wccnMatrix")+config.getParam("loadMatrixFilesExtension");
-				}
-				Matrix<double> Wccn(wccnFilename,config);
-				pldaTest.rotateLeft(Wccn);
-		}
-
-		// Scoring
-		pldaTest.cosineDistance(config);
-	}
-
-	else if(scoring=="mahalanobis"){
-
-		//Get Mahalanobis matrix
-		String mahalanobisFilename = "Mahalanobis";
-		if(config.existsParam("mahalanobisMatrix")){
-			mahalanobisFilename = config.getParam("matrixFilesPath")+config.getParam("mahalanobisMatrix")+config.getParam("loadMatrixFilesExtension");
-		}
-		
-		Matrix<double> Mah;
-		//Load Mahalanobis
-		Mah.load (mahalanobisFilename,config);
-
-		//Scoring
-		pldaTest.mahalanobisDistance(Mah,config);
-	}
-
-	else if(scoring=="2cov"){
-
-		//Load covariance matrices
-		String W2covFilename = "2Cov_W";
-		String B2covFilename = "2Cov_B";
-		if(config.existsParam("TwoCovFilename")){
-			W2covFilename = config.getParam("TwoCovFilename") + "_W";
-			B2covFilename = config.getParam("TwoCovFilename") + "_B";
-		}
-		W2covFilename = config.getParam("matrixFilesPath")+ W2covFilename + config.getParam("loadMatrixFilesExtension");
-		B2covFilename = config.getParam("matrixFilesPath")+ B2covFilename + config.getParam("loadMatrixFilesExtension");
-		
-
-		Matrix<double> tmpW(W2covFilename,config);
-		Matrix<double> tmpB(B2covFilename,config);
-		DoubleSquareMatrix W,B;
-		W.setSize(tmpW.rows()); B.setSize(tmpB.rows());
-		for(unsigned long ii=0;ii<tmpW.rows();ii++)
-			for(unsigned long jj=0;jj<tmpW.rows();jj++){
-				W(ii,jj) = tmpW(ii,jj);
-				B(ii,jj) = tmpB(ii,jj);
-			}
-
-		//Scoring
-		pldaTest.twoCovScoring(W, B, config);
-	}
-
-	else if(scoring=="plda"){
-
-		// TO DO: charger les matrices
-		PldaModel plda("test",config);
-
-		// Select plda scoring mode: Multiple-Segment LLR, Mean, ScoreFusion
-		String pldaScoring = "native";
-		if(config.existsParam("pldaScoring")) pldaScoring = config.getParam("pldaScoring");
-		
-		if(pldaScoring == "enrollMean"){
-			pldaTest.pldaMeanScoring(plda,config);
-		}
-		else if((pldaScoring == "native") || (pldaTest.getMaxEnrollmentSession() == 1)){
-			pldaTest.pldaNativeScoring(plda,config);
-		}
-	}
-	else{
-		cout<<"Scoring option is invalid, must be: cosine OR mahalanobis OR 2cov OR plda"<<endl;
-	}
-
-	String outputScoreFormat = "ascii";
-	if(config.existsParam("outputScoreFormat")) outputScoreFormat = config.getParam("outputScoreFormat");
-
-	if(outputScoreFormat == "ascii"){
-		ofstream outNist(outputNISTFileName.c_str(),ios::out | ios::trunc);    				// Initialise the output file
-		if(verboseLevel >0) cout<<"Score computation done, writing the file in ASCII file"<<endl;
-	
-		double *_s;
-		bool *_t;
-		Matrix<double> _S(pldaTest.getScores());
-		BoolMatrix Trials(pldaTest.getTrials());
-		_s = _S.getArray();
-		_t = Trials.getArray();
-
-		unsigned long segNb = pldaTest.getSegmentsNumber();
-		unsigned long modNb = pldaTest.getModelsNumber();
-
-		// Write scores in ASCII outputFile
-		for(unsigned long s=0;s<segNb;s++){
-			for(unsigned long m=0;m<modNb;m++){
-				if(_t[m*segNb+s]){
-					char decision=setDecision(_s[m*segNb+s],decisionThreshold);                       // take a decision
-					outputResultLine(_s[m*segNb+s], pldaTest.getModelName(m),pldaTest.getSegmentName(s) ,gender ,decision,outNist);
-				}
-
-			}
-		}
-		outNist.close(); 
-	}
-
-	else if(outputScoreFormat == "binary"){
-		cerr<<"Not implemented yet..."<<endl;
-
-		//save model list in one file
-
-		//save segment list in one file
-
-		//save matrix of score in Binary format (DB)
-
-	}
-
-
-	
-}// fin try
-catch (Exception& e){ 
-	cout << e.toString().c_str() << endl;
-}
-return 0;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif //!defined(ALIZE_ComputeTest_cpp)

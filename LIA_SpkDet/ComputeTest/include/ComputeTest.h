@@ -63,13 +63,12 @@ Jean-Francois Bonastre [jean-francois.bonastre@univ-avignon.fr]
 #endif
 
 int ComputeTest(alize::Config&);
-int ComputeTestFA(alize::Config&);			/* DM version */
-int ComputeTestJFA(alize::Config&)			/* AL version */;
-int ComputeTestLFA(alize::Config&);			/* AL version */
-int ComputeTestDotProduct(alize::Config&);		/* AL version */
+int ComputeTestFA(alize::Config&);
+int ComputeTestJFA(alize::Config&);
+int ComputeTestLFA(alize::Config&);
+int ComputeTestDotProduct(alize::Config&);
 int ComputeTestNAP(alize::Config&);
 int ComputeTestByLabel(alize::Config&);
 int ComputeTestHisto(alize::Config&);
-int ComputeTestIV(alize::Config&);			/* AL version*/
 
 #endif // 
