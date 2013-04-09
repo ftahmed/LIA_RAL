@@ -82,7 +82,7 @@ try {
 		cmdLine.copyIntoConfig(initConfig);
 		initCc.check(initConfig);
 
-		cc.addStringParam("vectorFilesExtension",true,true,"extension of vector files");
+		cc.addStringParam("loadVectorFilesExtension",true,true,"extension of vector files");
 		cc.addStringParam("loadVectorFilesPath",true,true,"path to vectors");
 		cc.addStringParam("testVectorFilesPath",true,true,"path to test vectors");
 		cc.addStringParam("scoring",true,true,"cosine / mahalanobis / 2cov / plda");

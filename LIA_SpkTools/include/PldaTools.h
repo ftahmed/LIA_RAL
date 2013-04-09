@@ -304,6 +304,11 @@ class LIA_SPKTOOLS_API PldaDev{
 		///
 		void sphericalNuisanceNormalization(Config& config);
 
+		/// Apply normalization if the parameters already exist
+		/// @param config the configuration file
+		///
+		void applySphericalNuisanceNormalization(Config& config);
+
 
 		/// Estimate parameters for Probabilistic Linear Discriminant Analysis model
 		/// @param config configuration object

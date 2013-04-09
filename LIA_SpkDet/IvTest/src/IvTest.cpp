@@ -117,7 +117,7 @@ int IvTest(Config& config){
 	// (scoring=="cosine") && (!loadWccnMatrix)
 	// (scoring=="2cov") && (!load2covMatrix)
 	//
-	if(( (config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()&& !config.getParam("ivNormLoadParam").toBool()) ||
+	if(( (config.existsParam("ivNorm")&&config.getParam("ivNorm").toBool()&& !config.getParam("ivNormLoadParam").toBool()) ||	
 		((scoring=="mahalanobis") && (!loadMahalanobisMatrix)) ||
 		(WCCN && (!loadWccnMatrix)) ||
 		((scoring=="2cov") && (!load2covMatrix))
@@ -163,6 +163,29 @@ int IvTest(Config& config){
 					ldaMat.save(ldaFilename,config);
 				}
 			}
+
+//If normalization parameters already exist and should be apply on dev data
+else{
+
+   	if(config.getParam("ivNormIterationNb").toULong() > 0){ //Estimate normalization parameters
+                if(verboseLevel>0) cout<<"(IvTest)      Estimate EFR parameters"<<endl;
+        	dev.applySphericalNuisanceNormalization(config);
+     	}
+
+	if(config.existsParam("LDA") && config.getParam("LDA").toBool()){       //if LDA is required
+		//Load LDA matrix
+        	Matrix<double> ldaMat;
+        	String ldaFilename = config.getParam("matrixFilesPath")+config.getParam("ldaMatrix")+config.getParam("loadMatrixFilesExtension");
+        	cout<<"         Load LDA matrix from: "<<ldaFilename<<endl;
+        	ldaMat.load (ldaFilename,config);	
+
+        	//Apply LDA on development data
+        	if(verboseLevel>0)      cout<<"(IvTest)         Apply LDA on dev data"<<endl;
+		dev.rotateLeft(ldaMat);
+	}
+
+}
+
 		}
 
 		//Compute Within Class Covariance Matrix for Cosine scoring

@@ -63,20 +63,14 @@ fi
 AC_SUBST(lib_alize)
 
 
-# Checks for alize libraries.
+# Checks for LAPACK libraries.
 AC_ARG_WITH([lapack],
         [AS_HELP_STRING([--with-lapack],
                 [location of the Lapacke library; defaults to ../lapack/])],
         [LAPACK_PATH="$withval"],
         [LAPACK_PATH="`pwd`/../lapack/"])
 AC_SUBST(LAPACK_PATH)
-#lib_alize=0
-#AC_CHECK_FILE([${ALIZE_PATH}/lib/libalize_${OS}_${ARCH}${DEBUG}.a],lib_alize=-lalize_${OS}_${ARCH}${DEBUG},)
-#AC_CHECK_FILE([${ALIZE_PATH}/lib/libalize.a],lib_alize=-lalize,)
-#if [[ ${lib_alize} = 0 ]] ; then
-#        AC_MSG_ERROR(alize library (libalize.a or libalize_${OS}_${ARCH}${DEBUG}) not found - searched in "${ALIZE_PATH}/lib")
-#fi
-#AC_SUBST(lib_alize)
+
 
 
 
