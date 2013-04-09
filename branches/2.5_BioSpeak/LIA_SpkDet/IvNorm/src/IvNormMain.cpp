@@ -80,7 +80,8 @@ int main(int argc, char* argv[]) {
 		initCc.addStringParam("loadMatrixFormat",true,true,"format to load matrices, DB for binary | DT for ASCII");
 		initCc.addStringParam("matrixFilesPath",true,true,"path to matrices");
 
-		initCc.addStringParam("vectorFilesExtension",true,true,"extension of vector files");
+		initCc.addStringParam("loadVectorFilesExtension",true,true,"extension of vector files to load");
+		initCc.addStringParam("saveVectorFilesExtension",true,true,"extension of vector files to save");
 		initCc.addStringParam("ivNormEfrMatrixBaseName",true,true,"Eigen Factor Radial matrix name");
 		initCc.addStringParam("ivNormEfrMeanBaseName",true,true,"Eigen Factor Radial mean vector name");
 		
