@@ -67,7 +67,8 @@ int main(int argc, char* argv[]){
     cc.addStringParam("labelSelectedFrames",false,true,"The segments with this label are used for training the worldmodel (if UseIdForSelectedFrame is not used)"); 
     cc.addBooleanParam("info",false,false,"If info is requested, just info on the train set is outputed");
     cc.addStringParam("saveVectorFilesPath",true,true,"Directory to store i-vectors after extraction");
-
+	cc.addStringParam("mode",false,true,"Mode of i-vector extraction, classic (default) | ubmWeight | eigenDecomposition");
+	cc.addBooleanParam("loadUbmWeightParam",false,true,"If true, load pre-computed parameters for ubmWeight approximation");
 	
 
 try{
@@ -94,11 +95,22 @@ try{
     bool train=true;                                 				// Training the target models
     if (config.existsParam("info"))                  				// Information on the data available for the targets and output a file with good amount of data
       train=false;
+
+	String mode = "classic";
+	if(config.existsParam("mode"))
+		mode = config.getParam("mode");
     if (train){
 //		if (config.existsParam("byLabelModel"))    					// if the paramter is present, for each client, we train one model for each cluster 
 //			TrainTargetByLabel(config);                  			// (a cluster is a set of segments with the same label)
-
-		IvExtractor(config); 
+		if(mode == "classic")
+			IvExtractor(config); 
+		else if(mode == "ubmWeight")
+			IvExtractorUbmWeigth(config);
+		else if(mode == "eigenDecomposition")
+			cout<<"Not implemented yet"<<endl;
+		else{
+			InfoTarget(config);
+		}
     }
     else   InfoTarget(config);   
     

@@ -205,10 +205,110 @@ try{
 	tvAcc.saveWbyFile(config);
 	cout<<"--------- end of process --------"<<endl;
 
-
 } // fin try
 catch (Exception& e) {cout << e.toString().c_str() << endl;}
 return 0;
 }
 
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------
+int IvExtractorUbmWeigth(Config& config)
+{
+	String inputWorldFilename = config.getParam("inputWorldFilename");
+
+	// label for selected frames - Only the frames associated with this label, in the label files, will be used
+	bool fixedLabelSelectedFrame=true;
+	String labelSelectedFrames;
+	if (config.existsParam("useIdForSelectedFrame"))    // the ID of each speaker is used as labelSelectedFrame ?
+		fixedLabelSelectedFrame=(config.getParam("useIdForSelectedFrame").toBool()==false);  
+	if (fixedLabelSelectedFrame)                        // the label is decided by the command line and is unique for the run
+		labelSelectedFrames=config.getParam("labelSelectedFrames");
+ 
+try{
+	MixtureServer ms(config);
+	if (verbose) cout << "(IvExtractor) Approximate i-vector by using UBM's weight parameters"<<endl;
+	if (verbose) cout << "(IvExtractor) TotalVariability - Load world model [" << inputWorldFilename<<"]"<<endl;
+	MixtureGD& world = ms.loadMixtureGD(inputWorldFilename);      
+
+	//Read the NDX file
+	String ndxFilename = config.getParam("targetIdList");
+
+	//Remove the first element of each line which is the model name
+	XList tmpFileList(ndxFilename);
+	XList fileList;
+	for(unsigned long ll=0;ll<tmpFileList.getLineCount();ll++){
+		fileList.addLine();
+		for(unsigned long i=1;i<tmpFileList.getLine()->getElementCount();i++){
+			fileList.getLine(fileList.getLineCount()-1).addElement(tmpFileList.getLine(ll).getElement(i));
+		}
+	}
+	
+	//Create and initialise the accumulator
+	TVAcc tvAcc(fileList, config);
+
+	DoubleSquareMatrix W(tvAcc.getRankT());
+
+	if(config.existsParam("loadUbmWeightParam") && config.getParam("loadUbmWeightParam").toBool()){	// Load normalized T matrix and weighted Covariance matrix if pre-computed
+		//Load TotalVariability matrix
+		String normTFilename = config.getParam("totalVariabilityMatrix") + "_norm";
+		tvAcc.loadT(normTFilename, config);
+
+		//Load weighted Covariance matrix
+		String wFilename = config.getParam("totalVariabilityMatrix") + "_weightedCov";
+		Matrix<double> tmpW(wFilename,config);
+		for(unsigned long i=0;i<tvAcc.getRankT();i++)
+			for(unsigned long j=0;j<tvAcc.getRankT();j++)
+				W(i,j)=tmpW(i,j);
+
+	}
+	else{
+		//Load TotalVariability matrix
+		tvAcc.loadT(config.getParam("totalVariabilityMatrix"), config);
+
+		// Normalize matrix T
+		tvAcc.normTMatrix();
+
+		// Compute weighted co-variance matrix by using UBM weight coefficients
+		W.setAllValues(0.0);
+		tvAcc.getWeightedCov(W,world.getTabWeight(),config);
+	}
+
+	//Load the statistics from files or compute statistics for all segments at once
+	if((config.existsParam("loadAccs")) && config.getParam("loadAccs").toBool()){	//load pre-computed statistics
+		cout<<"	(IvExtractor) Load Accumulators"<<endl;
+		tvAcc.loadN(config);
+		tvAcc.loadF_X(config);
+	}
+	else{															//Compute statistics if they don't exists
+		tvAcc.computeAndAccumulateTVStat(config);
+		tvAcc.saveAccs(config);
+	}
+
+	// Then load the meanEstimate computed by minDiv if required
+	DoubleVector meanEstimate = tvAcc.getUbmMeans();
+	if(config.existsParam("minDivergence")&& config.getParam("minDivergence").toBool()){
+		String minDivName = config.getParam("matrixFilesPath") + config.getParam("meanEstimate") + config.getParam("loadMatrixFilesExtension");
+		Matrix<double> tmpMean(minDivName,config);
+		for(unsigned long i=0;i<meanEstimate.size();i++){
+			meanEstimate[i] = tmpMean(0,i);
+		}
+	}
+	//Update the mean Estimate
+	cout<<"	(IvExtractor) Load Mean Estimate"<<endl;
+	tvAcc.loadMeanEstimate(meanEstimate);
+
+	//Substract mean from the statistics and normalize co-variance
+	tvAcc.normStatistics(config);
+
+	// Estimate I-Vectors
+	tvAcc.estimateWUbmWeight(W,config);
+
+	cout<<"--------- save IV by File --------"<<endl;
+	tvAcc.saveWbyFile(config);
+	cout<<"--------- end of process --------"<<endl;
+
+
+} // fin try
+catch (Exception& e) {cout << e.toString().c_str() << endl;}
+return 0;
+}
 #endif //!defined(ALIZE_IvExtractor_cpp)
