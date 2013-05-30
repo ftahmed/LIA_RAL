@@ -107,7 +107,7 @@ try{
 		else if(mode == "ubmWeight")
 			IvExtractorUbmWeigth(config);
 		else if(mode == "eigenDecomposition")
-			cout<<"Not implemented yet"<<endl;
+			IvExtractorEigenDecomposition(config);
 		else{
 			InfoTarget(config);
 		}
