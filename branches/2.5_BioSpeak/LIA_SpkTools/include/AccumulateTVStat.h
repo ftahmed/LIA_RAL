@@ -402,6 +402,17 @@ class LIA_SPKTOOLS_API TVAcc{
 			void estimateWUbmWeightThreaded(DoubleSquareMatrix &W, unsigned long threads);
 		#endif
 
+		void estimateWEigenDecomposition(Matrix<double> D, Matrix<double> Q, Config& config);
+
+		void estimateWEigenDecompositionUnThreaded(Matrix<double> D, Matrix<double> Q, Config& config);
+
+		#ifdef THREAD
+			/// Approximate W components using multi-threads
+			/// @param threads number of threads to launch
+			/// 
+			void estimateWEigenDecompositionThreaded(Matrix<double> &D, Matrix<double> &Q, unsigned long threads);
+		#endif
+
 		/// Update the Total Variability Matrix
 		///
 		void updateTestimate();
@@ -577,5 +588,16 @@ class LIA_SPKTOOLS_API TVAcc{
 		void getWeightedCovThreaded(DoubleSquareMatrix &W, DoubleVector& weight, unsigned long threads);
 		#endif
 
+		void computeEigenProblem(Matrix<double> &EP,Matrix<double> &eigenVect, long rank, Config& config);
+		void computeEigenProblem(Matrix<double> &EP,Matrix<double> &eigenVect,Matrix<double> &eigenVal, long rank, Config& config);
+
+		void approximateTcTc(Matrix<double> &D, Matrix<double> &Q, Config &config);
+		void approximateTcTcUnThreaded(Matrix<double> &D, Matrix<double> &Q);
+
+		#ifdef THREAD
+
+		///
+		void approximateTcTcThreaded(Matrix<double> &D, Matrix<double> &Q, unsigned long threads);
+		#endif
 };
 #endif
