@@ -68,6 +68,8 @@ int InfoTarget(Config& config);
 
 int IvExtractor(alize::Config&);
 
+int IvExtractorUbmWeigth(alize::Config&);
+
 #endif // !defined(IvExtractor)
 
 
