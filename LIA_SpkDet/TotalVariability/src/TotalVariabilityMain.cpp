@@ -83,6 +83,8 @@ int main(int argc, char* argv[]) {
 		cc.addBooleanParam("saveAllTVMatrices",false,true,"if true save the matrices after each iteration");
 		cc.addIntegerParam("computeLLK",false,true,"optional: nb of files where LLK is computed");	
 
+		cc.addStringParam("approximationMode",false,true,"Output parameters required for i-vector approximation using ubmWeight or eigenDecomposition");
+
 		// Insertion of config compatibility rules
 		CmdLine cmdLine(argc, argv);
 

@@ -177,6 +177,39 @@ int TotalVariability(Config & config){
 	}
 	cout<<"	(TotalVariability) --------- end of process --------"<<endl;
 
+	// If Required, output parameters for approximated i-vector extraction (ubmWeight or eigenDecomposition)
+	if(config.existsParam("approximationMode")){
+
+		if(config.getParam("approximationMode") == "ubmWeight"){
+			cout<<"	(TotalVariability) Compute weighted covariance matrix W for i-vector approximation using ubmWeight"<<endl;
+
+			//Return the normalize T matrix
+			tvAcc.normTMatrix();
+			String normTFilename = config.getParam("totalVariabilityMatrix") + "_norm";
+			tvAcc.saveT(normTFilename, config);
+
+			//Return  the weighted covariance matrix
+			String inputWorldFilename = config.getParam("inputWorldFilename");
+			MixtureServer ms(config);
+			MixtureGD& world = ms.loadMixtureGD(inputWorldFilename);
+			DoubleSquareMatrix W(tvAcc.getRankT());
+			W.setAllValues(0.0);
+			tvAcc.getWeightedCov(W,world.getTabWeight(),config);
+			Matrix<double> tmpW(W);
+			String wFilename = config.getParam("totalVariabilityMatrix") + "_weightedCov";
+			tmpW.save(wFilename, config);
+		}
+		else if(config.getParam("approximationMode") == "eigenDecomposition"){
+			cout<<"	(TotalVariability) Approximation mode eigenDecomposition is not implemented yet"<<endl;
+		}
+		else{
+			cout<<"	(TotalVariability) This approximation mode does not exists"<<endl;	// to check before to avoid being disapointed at the end
+		}
+
+
+	}
+
+
 return 0;
 }
 
