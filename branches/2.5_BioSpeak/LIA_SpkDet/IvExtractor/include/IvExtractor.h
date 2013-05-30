@@ -66,9 +66,11 @@ using namespace std;
 // Uses the same input file than IvExtractor and output a new list
 int InfoTarget(Config& config);
 
-int IvExtractor(alize::Config&);
+int IvExtractor(Config& config);
 
-int IvExtractorUbmWeigth(alize::Config&);
+int IvExtractorUbmWeigth(Config& config);
+
+int IvExtractorEigenDecomposition(Config& config);
 
 #endif // !defined(IvExtractor)
 
