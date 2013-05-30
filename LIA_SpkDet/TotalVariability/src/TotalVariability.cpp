@@ -200,7 +200,36 @@ int TotalVariability(Config & config){
 			tmpW.save(wFilename, config);
 		}
 		else if(config.getParam("approximationMode") == "eigenDecomposition"){
-			cout<<"	(TotalVariability) Approximation mode eigenDecomposition is not implemented yet"<<endl;
+			cout<<"	(TotalVariability) Compute D and Q matrices for i-vector approximation using eigenDecomposition"<<endl;
+
+			// Normalize matrix T
+			tvAcc.normTMatrix();
+			String normTFilename = config.getParam("totalVariabilityMatrix") + "_norm";
+			tvAcc.saveT(normTFilename, config);
+
+			// Compute weighted co-variance matrix by using UBM weight coefficients
+			String inputWorldFilename = config.getParam("inputWorldFilename");
+			MixtureServer ms(config);
+			MixtureGD& world = ms.loadMixtureGD(inputWorldFilename);
+			DoubleSquareMatrix W(tvAcc.getRankT());
+			W.setAllValues(0.0);
+			tvAcc.getWeightedCov(W,world.getTabWeight(),config);
+
+			// Eigen Decomposition of W to get Q
+			Matrix<double> tmpW(W);
+			Matrix<double> Q(tvAcc.getRankT(),tvAcc.getRankT());
+			Q.setAllValues(0.0);
+			tvAcc.computeEigenProblem(tmpW,Q,tvAcc.getRankT(),config);
+
+			// Compute D matrices (approximation of Tc'Tc matrices)
+			Matrix<double> D(tvAcc.getNDistrib(),tvAcc.getRankT());
+			D.setAllValues(0.0);
+			tvAcc.approximateTcTc(D,Q,config);
+
+			String dFilename = config.getParam("totalVariabilityMatrix") + "_EigDec_D";
+			String qFilename = config.getParam("totalVariabilityMatrix") + "_EigDec_Q";
+			D.save(dFilename, config);
+			Q.save(qFilename, config);
 		}
 		else{
 			cout<<"	(TotalVariability) This approximation mode does not exists"<<endl;	// to check before to avoid being disapointed at the end
