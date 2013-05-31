@@ -253,7 +253,7 @@ try{
 		tvAcc.loadT(normTFilename, config);
 
 		//Load weighted Covariance matrix
-		String wFilename = config.getParam("totalVariabilityMatrix") + "_weightedCov";
+		String wFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_weightedCov" + config.getParam("loadMatrixFilesExtension");
 		Matrix<double> tmpW(wFilename,config);
 		for(unsigned long i=0;i<tvAcc.getRankT();i++)
 			for(unsigned long j=0;j<tvAcc.getRankT();j++)
@@ -312,46 +312,6 @@ catch (Exception& e) {cout << e.toString().c_str() << endl;}
 return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------
 int IvExtractorEigenDecomposition(Config& config)
 {
@@ -389,17 +349,17 @@ try{
 	Matrix<double> Q(tvAcc.getRankT(),tvAcc.getRankT());
 	Matrix<double> D(tvAcc.getNDistrib(),tvAcc.getRankT());
 
-	if(config.existsParam("loadUbmWeightParam") && config.getParam("loadUbmWeightParam").toBool()){	// Load normalized T matrix and weighted Covariance matrix if pre-computed
+	if(config.existsParam("loadEigenDecompositionParam") && config.getParam("loadEigenDecompositionParam").toBool()){	// Load normalized T matrix and weighted Covariance matrix if pre-computed
 
 		//Load TotalVariability matrix
 		String normTFilename = config.getParam("totalVariabilityMatrix") + "_norm";
 		tvAcc.loadT(normTFilename, config);
 
 		//Load D and Q matrices
-		String dFilename = config.getParam("totalVariabilityMatrix") + "_EigDec_D";
+		String dFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_EigDec_D" + config.getParam("loadMatrixFilesExtension");
 		D.load(dFilename,config);
 
-		String qFilename = config.getParam("totalVariabilityMatrix") + "_EigDec_Q";
+		String qFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_EigDec_Q" + config.getParam("loadMatrixFilesExtension");
 		Q.load(dFilename,config);
 
 	}
