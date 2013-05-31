@@ -196,7 +196,7 @@ int TotalVariability(Config & config){
 			W.setAllValues(0.0);
 			tvAcc.getWeightedCov(W,world.getTabWeight(),config);
 			Matrix<double> tmpW(W);
-			String wFilename = config.getParam("totalVariabilityMatrix") + "_weightedCov";
+			String wFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_weightedCov" + config.getParam("loadMatrixFilesExtension");
 			tmpW.save(wFilename, config);
 		}
 		else if(config.getParam("approximationMode") == "eigenDecomposition"){
@@ -226,8 +226,10 @@ int TotalVariability(Config & config){
 			D.setAllValues(0.0);
 			tvAcc.approximateTcTc(D,Q,config);
 
-			String dFilename = config.getParam("totalVariabilityMatrix") + "_EigDec_D";
-			String qFilename = config.getParam("totalVariabilityMatrix") + "_EigDec_Q";
+			config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_EigDec_D" + config.getParam("loadMatrixFilesExtension");
+
+			String dFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_EigDec_D" + config.getParam("loadMatrixFilesExtension");
+			String qFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_EigDec_Q" + config.getParam("loadMatrixFilesExtension");
 			D.save(dFilename, config);
 			Q.save(qFilename, config);
 		}
