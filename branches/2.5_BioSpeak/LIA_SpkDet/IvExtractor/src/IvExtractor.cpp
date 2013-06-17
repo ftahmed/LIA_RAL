@@ -360,7 +360,7 @@ try{
 		D.load(dFilename,config);
 
 		String qFilename = config.getParam("matrixFilesPath") + config.getParam("totalVariabilityMatrix") + "_EigDec_Q" + config.getParam("loadMatrixFilesExtension");
-		Q.load(dFilename,config);
+		Q.load(qFilename,config);
 
 	}
 	else{
